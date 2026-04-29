@@ -28,28 +28,45 @@ function HomePage() {
         {/* Banner-Bild kommt aus settings.json → kann später über Admin/API gesetzt werden. */}
         <img src={settings.bannerUrl} alt={`${settings.clanName} Banner`} />
         <div className="lg-banner-overlay">
-  <div
-    className="mono"
-    style={{
-      color: 'var(--clr-accent-arc)',
-      letterSpacing: '0.2em',
-      fontSize: '0.8rem',
-      textTransform: 'uppercase',
-    }}
-  >
-    {/* optional label removed if not wanted */}
-  </div>
+          <div
+            className="mono"
+            style={{
+              color: 'var(--clr-accent-arc)',
+              letterSpacing: '0.2em',
+              fontSize: '0.8rem',
+              textTransform: 'uppercase',
+            }}
+          >
+            {/* optional label removed */}
+          </div>
 
-  <h1
-    style={{
-      fontSize: 'clamp(2rem, 5vw, 3.6rem)',
-      margin: '0.4rem 0',
-      textTransform: 'uppercase',
-      letterSpacing: '0.05em',
-    }}
-  >
-    Willkommen bei <span style={{ color: 'var(--clr-accent-arc)' }}>{settings.clanName}</span>
-  
+          <h1
+            style={{
+              fontSize: 'clamp(2rem, 5vw, 3.6rem)',
+              margin: '0.4rem 0',
+              textTransform: 'uppercase',
+              letterSpacing: '0.05em',
+            }}
+          >
+            Willkommen bei <span style={{ color: 'var(--clr-accent-arc)' }}>{settings.clanName}</span>
+          </h1>
+
+          <p style={{ margin: 0, maxWidth: 720, color: 'var(--clr-text)', fontSize: '1.05rem' }}>
+            {settings.clanTagline}. Fokus auf Teamplay, Fairness und Spaß.
+          </p>
+
+          <div style={{ display: 'flex', gap: '0.6rem', marginTop: '1.2rem', flexWrap: 'wrap' }}>
+            <a className="lg-btn lg-btn-primary" href={settings.discordUrl} target="_blank" rel="noreferrer">
+              <OnlineLamp /> Zum Discord-Server
+            </a>
+            <a className="lg-btn" href={settings.twitchUrl} target="_blank" rel="noreferrer">
+              <OnlineLamp /> Zum Twitch-Channel
+            </a>
+            <Link className="lg-btn lg-btn-pubg" to="/bewerbung">
+              Jetzt bewerben
+            </Link>
+          </div>
+        </div>
       </section>
 
       {/* ----- Welcome / Mission ----- */}
@@ -62,7 +79,8 @@ function HomePage() {
             Wir sind PC-Gamer, keine Rookies
           </h2>
           <p style={{ maxWidth: 820, lineHeight: 1.6, color: 'var(--clr-text)' }}>
-            Leider Geil ist ein freundlicher PC-Clan mit Schwerpunkt auf <strong style={{ color: 'var(--clr-accent-pubg)' }}>PUBG</strong> und{' '}
+            Leider Geil ist ein freundlicher PC-Clan mit Schwerpunkt auf{' '}
+            <strong style={{ color: 'var(--clr-accent-pubg)' }}>PUBG</strong> und{' '}
             <strong style={{ color: 'var(--clr-accent-arc)' }}>ARC Raiders</strong>. Wir spielen
             außerdem regelmäßig weitere Multiplayer-Titel zusammen. Bei uns zählen Teamplay,
             Fairness und ein offenes Discord für alle.
@@ -71,7 +89,14 @@ function HomePage() {
       </section>
 
       {/* ----- Feature Grid ----- */}
-      <section style={{ marginTop: '2.5rem', display: 'grid', gap: '1.2rem', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))' }}>
+      <section
+        style={{
+          marginTop: '2.5rem',
+          display: 'grid',
+          gap: '1.2rem',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+        }}
+      >
         {/* Roster Teaser */}
         <div className="lg-panel" style={{ padding: '1.4rem' }}>
           <SectionHead label="// ROSTER" title="Unsere Squad" link={{ to: '/roster', label: 'Komplettes Roster' }} />
@@ -83,7 +108,9 @@ function HomePage() {
                   <div style={{ fontFamily: 'var(--font-headline)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                     {m.name}
                   </div>
-                  <div className="lg-muted" style={{ fontSize: '0.8rem' }}>{m.role}</div>
+                  <div className="lg-muted" style={{ fontSize: '0.8rem' }}>
+                    {m.role}
+                  </div>
                 </div>
               </div>
             ))}
@@ -110,11 +137,23 @@ function HomePage() {
           <SectionHead label="// VIDEOS" title="Highlights" link={{ to: '/videos', label: 'Galerie öffnen' }} />
           <div style={{ display: 'grid', gap: '0.7rem' }}>
             {featuredVideos.map((v) => (
-              <a key={v.id} href={v.url} target="_blank" rel="noreferrer" style={{ display: 'flex', gap: '0.6rem', alignItems: 'center', color: 'var(--clr-text)' }}>
-                <img src={v.thumbnail} alt="" style={{ width: 70, height: 44, objectFit: 'cover', borderRadius: 6, border: '1px solid var(--clr-border)' }} />
+              <a
+                key={v.id}
+                href={v.url}
+                target="_blank"
+                rel="noreferrer"
+                style={{ display: 'flex', gap: '0.6rem', alignItems: 'center', color: 'var(--clr-text)' }}
+              >
+                <img
+                  src={v.thumbnail}
+                  alt=""
+                  style={{ width: 70, height: 44, objectFit: 'cover', borderRadius: 6, border: '1px solid var(--clr-border)' }}
+                />
                 <div>
                   <div style={{ fontSize: '0.92rem', fontWeight: 500 }}>{v.title}</div>
-                  <div className="lg-muted mono" style={{ fontSize: '0.72rem' }}>{v.platform}</div>
+                  <div className="lg-muted mono" style={{ fontSize: '0.72rem' }}>
+                    {v.platform}
+                  </div>
                 </div>
               </a>
             ))}
