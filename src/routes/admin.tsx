@@ -9,8 +9,40 @@ import { gameTagClass } from '@/lib/types'
 import { Modal } from '@/components/Modal'
 import { OnlineLamp } from '@/components/OnlineLamp'
 
+// Simple client-side guard (lightweight, not production-secure)
+const ADMIN_PASSWORD = 'Snickers2026!' // ändere hier dein Passwort
+
+function AdminWrapper(props: any) {
+  const [authorized, setAuthorized] = useState(false)
+  const [pw, setPw] = useState('')
+
+  if (!authorized) {
+    return (
+      <div style={{ maxWidth: 480, margin: '4rem auto', padding: '1rem' }}>
+        <h2>Admin Login</h2>
+        <p style={{ color: 'var(--clr-text-muted)' }}>Dieser Bereich ist nur für Admins. Bitte Passwort eingeben.</p>
+        <input
+          type="password"
+          value={pw}
+          onChange={(e) => setPw(e.target.value)}
+          placeholder="Admin-Passwort"
+          style={{ width: '100%', padding: '.6rem', marginBottom: '.6rem', borderRadius: 6, border: '1px solid var(--clr-border)', background: 'var(--clr-bg)', color: 'var(--clr-text)' }}
+        />
+        <div style={{ display: 'flex', gap: '.6rem' }}>
+          <button className="lg-btn" onClick={() => { if (pw === ADMIN_PASSWORD) setAuthorized(true); else alert('Falsches Passwort'); }}>
+            Login
+          </button>
+          <button className="btn-sm" onClick={() => setPw('')}>Zurücksetzen</button>
+        </div>
+      </div>
+    )
+  }
+
+  return <AdminPage {...props} />
+}
+
 export const Route = createFileRoute('/admin')({
-  component: AdminPage,
+  component: AdminWrapper,
 })
 
 /**
