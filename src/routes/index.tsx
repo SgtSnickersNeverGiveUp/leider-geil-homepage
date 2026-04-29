@@ -28,18 +28,7 @@ function HomePage() {
         {/* Banner-Bild kommt aus settings.json → kann später über Admin/API gesetzt werden. */}
         <img src={settings.bannerUrl} alt={`${settings.clanName} Banner`} />
         <div className="lg-banner-overlay">
-          <div
-            className="mono"
-            style={{
-              color: 'var(--clr-accent-arc)',
-              letterSpacing: '0.2em',
-              fontSize: '0.8rem',
-              textTransform: 'uppercase',
-            }}
-          >
-            // PC-CLAN
-          </div>
-          <h1
+          
             style={{
               fontSize: 'clamp(2rem, 5vw, 3.6rem)',
               margin: '0.4rem 0',
