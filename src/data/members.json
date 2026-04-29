@@ -1,0 +1,62 @@
+[
+  {
+    "id": "m1",
+    "name": "GhostWolf",
+    "role": "Clan-Leader",
+    "clanRole": "Leader",
+    "games": ["PUBG", "ARC Raiders"],
+    "bio": "Squad-Leader mit Faible für taktische Late-Game-Pushes. Spielt seit der frühen Beta.",
+    "funTags": ["Caller", "Sniper", "Strategist"],
+    "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=GhostWolf&backgroundColor=0FF2A9"
+  },
+  {
+    "id": "m2",
+    "name": "NeonByte",
+    "role": "Co-Leader",
+    "clanRole": "Co-Leader",
+    "games": ["ARC Raiders", "Valorant"],
+    "bio": "Backup-Leader und Discord-Admin. Sorgt dafür, dass nichts brennt – außer der Loot-Spot.",
+    "funTags": ["Recon", "Support"],
+    "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=NeonByte&backgroundColor=14141c"
+  },
+  {
+    "id": "m3",
+    "name": "PixelPanda",
+    "role": "Officer / Eventmanagerin",
+    "clanRole": "Officer",
+    "games": ["PUBG"],
+    "bio": "Plant Events, Turniere und Mix'N'Match-Abende. Meistens mit AWM in der Hand.",
+    "funTags": ["Event-Crew", "AWM-Main"],
+    "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=PixelPanda&backgroundColor=FF9C43"
+  },
+  {
+    "id": "m4",
+    "name": "RouterRanger",
+    "role": "Member",
+    "clanRole": "Member",
+    "games": ["ARC Raiders", "Apex Legends"],
+    "bio": "Movement-King und Loot-Goblin. Findet Items, die andere nicht mal sehen.",
+    "funTags": ["Movement", "Loot-Goblin"],
+    "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=RouterRanger&backgroundColor=1a1a2e"
+  },
+  {
+    "id": "m5",
+    "name": "ChaosCarrot",
+    "role": "Member",
+    "clanRole": "Member",
+    "games": ["PUBG", "ARC Raiders"],
+    "bio": "Initiativbomber. Wenn jemand zuerst rein rennt, dann sie.",
+    "funTags": ["Frag", "Entry"],
+    "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=ChaosCarrot&backgroundColor=2a2a3c"
+  },
+  {
+    "id": "m6",
+    "name": "VoltVixen",
+    "role": "Recruit",
+    "clanRole": "Recruit",
+    "games": ["PUBG"],
+    "bio": "Frischling mit Mid-Range-Skill und sehr viel Energy.",
+    "funTags": ["New Blood"],
+    "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=VoltVixen&backgroundColor=0FF2A9"
+  }
+]

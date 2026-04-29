@@ -1,0 +1,32 @@
+[
+  {
+    "id": "1",
+    "text": "Nächstes Event: PUBG Mix'N'Match im Juni – Anmeldung unter EVENT-ANMELDUNG.",
+    "category": "PUBG",
+    "color": "#FF9C43"
+  },
+  {
+    "id": "2",
+    "text": "Allianz: Leider Geil & Der astreime",
+    "category": "Info",
+    "color": "#e0e0e6"
+  },
+  {
+    "id": "3",
+    "text": "Geburtstag von GhostWolf – Gratulation!",
+    "category": "Geburtstag",
+    "color": "#ffd866"
+  },
+  {
+    "id": "4",
+    "text": "ARC Raiders Raid Night am 30.05. – Squad-Plätze offen.",
+    "category": "ARC Raiders",
+    "color": "#0FF2A9"
+  },
+  {
+    "id": "5",
+    "text": "Bewerbungen sind aktuell geöffnet – wir suchen aktive Member.",
+    "category": "Info",
+    "color": "#e0e0e6"
+  }
+]

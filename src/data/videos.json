@@ -1,0 +1,34 @@
+[
+  {
+    "id": "v1",
+    "title": "PUBG – Chicken Dinner Compilation #12",
+    "description": "Die besten Wins der letzten Wochen, geschnitten von PixelPanda.",
+    "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+    "thumbnail": "/placeholder.png",
+    "platform": "YouTube"
+  },
+  {
+    "id": "v2",
+    "title": "ARC Raiders – First Look",
+    "description": "Erste Eindrücke aus der ARC Raiders Beta.",
+    "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+    "thumbnail": "/placeholder.png",
+    "platform": "YouTube"
+  },
+  {
+    "id": "v3",
+    "title": "Live: Late-Night Squad",
+    "description": "Vergangener Twitch-Stream als VOD.",
+    "url": "https://www.twitch.tv/example",
+    "thumbnail": "/placeholder.png",
+    "platform": "Twitch"
+  },
+  {
+    "id": "v4",
+    "title": "Highlight: 1v4 Clutch",
+    "description": "Ein Clutch, den keiner von uns für möglich gehalten hätte.",
+    "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+    "thumbnail": "/placeholder.png",
+    "platform": "YouTube"
+  }
+]

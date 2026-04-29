@@ -1,0 +1,38 @@
+[
+  {
+    "id": "ms1",
+    "year": "2021",
+    "title": "Gründung des Clans",
+    "description": "Eine handvoll Freunde startet „Leider Geil“ als kleinen PUBG-Squad."
+  },
+  {
+    "id": "ms2",
+    "year": "2022",
+    "title": "Erster Discord-Server",
+    "description": "Eigener Discord, Voice-Channels und Recruiting-Bereich gehen online."
+  },
+  {
+    "id": "ms3",
+    "year": "2023",
+    "title": "Erstes internes Turnier",
+    "description": "Mix'N'Match Turnier mit über 30 Teilnehmern und Live-Stream auf Twitch."
+  },
+  {
+    "id": "ms4",
+    "year": "2024",
+    "title": "Allianz mit „Der astreime“",
+    "description": "Wir gehen eine feste Allianz mit befreundetem Clan ein – mehr Scrims, mehr Fun."
+  },
+  {
+    "id": "ms5",
+    "year": "2025",
+    "title": "ARC Raiders Squad",
+    "description": "Wir öffnen einen zweiten Hauptspiele-Bereich und stellen ein ARC-Raiders-Team auf."
+  },
+  {
+    "id": "ms6",
+    "year": "2026",
+    "title": "Neues Clan-Web-Hub",
+    "description": "Diese neue Website geht live – inkl. Roster, Events und Admin-Bereich."
+  }
+]
