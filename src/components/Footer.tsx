@@ -65,11 +65,12 @@ export function Footer() {
         <div>
           <div className="lg-headline" style={{ fontSize: '0.85rem', marginBottom: '0.4rem' }}>
             Intern
-          </div>
-          {/* Adminbereich ist nur per Direktlink erreichbar – nicht in der Hauptnav. */}
-          <Link to="/admin" style={{ fontSize: '0.9rem' }}>Admin-Dashboard</Link>
-        </div>
-      </div>
+         </div>
+{/* Adminbereich ist nur per Direktlink erreichbar – Link bewusst entfernt.
+    Zugriff nur noch über direkte URL z.B. /admin */}
+{/* <Link to="/admin" style={{ fontSize: '0.9rem' }}>Admin-Dashboard</Link> */}
+</div>
+</div>
 
       <div
         style={{
