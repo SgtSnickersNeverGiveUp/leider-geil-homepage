@@ -28,33 +28,28 @@ function HomePage() {
         {/* Banner-Bild kommt aus settings.json → kann später über Admin/API gesetzt werden. */}
         <img src={settings.bannerUrl} alt={`${settings.clanName} Banner`} />
         <div className="lg-banner-overlay">
-          
-            style={{
-              fontSize: 'clamp(2rem, 5vw, 3.6rem)',
-              margin: '0.4rem 0',
-              textTransform: 'uppercase',
-              letterSpacing: '0.05em',
-            }}
-          >
-            Willkommen bei{' '}
-            <span style={{ color: 'var(--clr-accent-arc)' }}>{settings.clanName}</span>
-          </h1>
-          <p style={{ margin: 0, maxWidth: 720, color: 'var(--clr-text)', fontSize: '1.05rem' }}>
-            {settings.clanTagline}. Fokus auf Teamplay, Fairness und Spaß.
-          </p>
+  <div
+    className="mono"
+    style={{
+      color: 'var(--clr-accent-arc)',
+      letterSpacing: '0.2em',
+      fontSize: '0.8rem',
+      textTransform: 'uppercase',
+    }}
+  >
+    {/* optional label removed if not wanted */}
+  </div>
 
-          <div style={{ display: 'flex', gap: '0.6rem', marginTop: '1.2rem', flexWrap: 'wrap' }}>
-            <a className="lg-btn lg-btn-primary" href={settings.discordUrl} target="_blank" rel="noreferrer">
-              <OnlineLamp /> Zum Discord-Server
-            </a>
-            <a className="lg-btn" href={settings.twitchUrl} target="_blank" rel="noreferrer">
-              <OnlineLamp /> Zum Twitch-Channel
-            </a>
-            <Link className="lg-btn lg-btn-pubg" to="/bewerbung">
-              Jetzt bewerben
-            </Link>
-          </div>
-        </div>
+  <h1
+    style={{
+      fontSize: 'clamp(2rem, 5vw, 3.6rem)',
+      margin: '0.4rem 0',
+      textTransform: 'uppercase',
+      letterSpacing: '0.05em',
+    }}
+  >
+    Willkommen bei <span style={{ color: 'var(--clr-accent-arc)' }}>{settings.clanName}</span>
+  
       </section>
 
       {/* ----- Welcome / Mission ----- */}
