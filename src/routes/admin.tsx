@@ -86,7 +86,47 @@ const TABS: { id: Tab; label: string }[] = [
 ]
 
 function AdminPage() {
+  // Simple inline guard (client-side, basic protection)
+  const [authorized, setAuthorized] = useState(false)
+  const [pw, setPw] = useState('')
   const [tab, setTab] = useState<Tab>('bewerbungen')
+
+  if (!authorized) {
+    return (
+      <div style={{ maxWidth: 480, margin: '4rem auto', padding: '1rem' }}>
+        <h2>Admin Login</h2>
+        <p style={{ color: 'var(--clr-text-muted)' }}>
+          Dieser Bereich ist nur für Admins. Bitte Passwort eingeben.
+        </p>
+        <input
+          type="password"
+          value={pw}
+          onChange={(e) => setPw(e.target.value)}
+          placeholder="Admin            padding: '.6rem',
+            marginBottom: '.6rem',
+            borderRadius: 6,
+            border: '1px solid var(--clr-border)',
+            background: 'var(--clr-bg)',
+            color: 'var(--clr-text)',
+          }}
+        />
+        <div style={{ display: 'flex', gap: '.6rem' }}>
+          <button
+            className="lg-btn"
+            onClick={() => {
+              if (pw === ADMIN_PASSWORD) setAuthorized(true)
+              else alert('Falsches Passwort')
+            }}
+          >
+            Login
+          </button>
+          <button className="btn-sm" onClick={() => setPw('')}>
+            Zurücksetzen
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div style={{ maxWidth: 1280, margin: '0 auto', padding: '2rem 1.25rem' }}>
