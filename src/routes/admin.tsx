@@ -221,7 +221,7 @@ function BewerbungenTab() {
    Roster
    ================================================================== */
 
-f  async function add(e: React.FormEvent) {
+  async function add(e: React.FormEvent) {
     e.preventDefault();
 
     let avatarUrl = '/placeholder.png';
@@ -259,26 +259,25 @@ f  async function add(e: React.FormEvent) {
           {
             name: draft.name,
             role: draft.role,
-            clan_role: draft.clanRole, // Muss in der DB klein mit Unterstrich sein
+            clan_role: draft.clanRole,
             avatar: avatarUrl,
             bio: draft.bio,
             games: draft.games ? draft.games.split(',').map(s => s.trim()).filter(Boolean) : [],
             fun_tags: draft.funTags ? draft.funTags.split(',').map(s => s.trim()).filter(Boolean) : []
           }
         ])
-        .select(); // WICHTIG: Gibt das neu erstellte Objekt zurück
+        .select();
 
       if (saveError) throw saveError;
 
-      // 3. ERFOLGSMELDUNG UND RESET
       alert('Mitglied erfolgreich hinzugefügt!');
       
-      // Liste sofort aktualisieren ohne Refresh
+      // 3. LISTE AKTUALISIEREN (Sichere Variante für den Build)
       if (newData && newData.length > 0) {
-        setList(prev => [newData[0] as Member, ...prev]);
+        const addedMember = newData[0] as Member;
+        setList(prev => [addedMember, ...prev]);
       }
       
-      // Formular zurücksetzen
       setDraft({ 
         name: '', 
         role: '', 
@@ -290,10 +289,10 @@ f  async function add(e: React.FormEvent) {
       });
 
     } catch (err) {
-      console.error("DB Save Error:", err);
       alert('Fehler beim Speichern: ' + (err as Error).message);
     }
   }
+
 
 
   // 3. Löschen-Funktion (Jetzt auch für Supabase!)
