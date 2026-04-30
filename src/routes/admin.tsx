@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import members from '@/data/members.json'
 import events from '@/data/events.json'
 import videos from '@/data/videos.json'
@@ -8,7 +8,6 @@ import type { ClanEvent, ClanRole, Member, VideoItem } from '@/lib/types'
 import { gameTagClass } from '@/lib/types'
 import { Modal } from '@/components/Modal'
 import { OnlineLamp } from '@/components/OnlineLamp'
-import { useState, useEffect } from 'react'
 
 // Simple client-side guard (lightweight, not production-secure)
 const ADMIN_PASSWORD = 'Snickers2026!' // ändere hier dein Passwort
