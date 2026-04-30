@@ -233,119 +233,98 @@ function RosterTab() {
     avatarFile: null as File | null,
   })
 
+  // 1. Members laden beim Start
   useEffect(() => {
-  const loadMembers = async () => {
-    const { data, error } = await supabase
+    const loadMembers = async () => {
+      const { data, error } = await supabase
+        .from('members')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Fehler beim Laden:', error.message);
+      } else {
+        setList(data || []);
+      }
+    };
+    loadMembers();
+  }, []);
+
+  // 2. Hinzufügen-Funktion
+  async function add(e: React.FormEvent) {
+    e.preventDefault();
+
+    let avatarUrl = '/placeholder.png';
+
+    // BILD HOCHLADEN
+    if (draft.avatarFile) {
+      try {
+        const file = draft.avatarFile;
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Math.random()}.${fileExt}`;
+        const filePath = `avatars/${fileName}`;
+
+        const { data: upData, error: upError } = await supabase.storage
+          .from('member-images')
+          .upload(filePath, file);
+
+        if (upError) throw upError;
+
+        const { data: urlData } = supabase.storage
+          .from('member-images')
+          .getPublicUrl(filePath);
+
+        avatarUrl = urlData.publicUrl;
+      } catch (err) {
+        alert('Fehler beim Upload: ' + (err as Error).message);
+        return;
+      }
+    }
+
+    // DATEN IN TABELLE SPEICHERN
+    try {
+      const { data: newData, error: saveError } = await supabase
+        .from('members')
+        .insert([
+          {
+            name: draft.name,
+            role: draft.role,
+            clan_role: draft.clanRole,
+            avatar: avatarUrl,
+            bio: draft.bio,
+            games: draft.games ? draft.games.split(',').map(s => s.trim()) : [],
+            fun_tags: draft.funTags ? draft.funTags.split(',').map(s => s.trim()) : []
+          }
+        ])
+        .select();
+
+      if (saveError) throw saveError;
+
+      alert('Mitglied erfolgreich hinzugefügt!');
+      
+      // Liste aktualisieren und Formular leeren
+      if (newData) setList(prev => [newData[0], ...prev]);
+      setDraft({ name: '', role: '', clanRole: 'Recruit', games: '', bio: '', funTags: '', avatarFile: null });
+
+    } catch (err) {
+      alert('Fehler beim Speichern: ' + (err as Error).message);
+    }
+  }
+
+  // 3. Löschen-Funktion (Jetzt auch für Supabase!)
+  async function remove(id: string) {
+    if (!confirm('Mitglied wirklich löschen?')) return;
+    
+    const { error } = await supabase
       .from('members')
-      .select('*')
-      .order('created_at', { ascending: false });
+      .delete()
+      .eq('id', id);
 
     if (error) {
-      console.error('Fehler beim Laden:', error.message);
+      alert('Fehler beim Löschen: ' + error.message);
     } else {
-      setList(data || []);
+      setList((l) => l.filter((m) => m.id !== id));
     }
-  };
-
-  loadMembers();
-}, []);
-
-
-  async function add(e: React.FormEvent) {
-  e.preventDefault();
-
-  let avatarUrl = '/placeholder.png';
-
-  // 1. BILD HOCHLADEN (Dein neuer Teil)
-  if (draft.avatarFile) {
-    try {
-      const file = draft.avatarFile;
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${Math.random()}.${fileExt}`;
-      const filePath = `avatars/${fileName}`;
-
-      const { data: upData, error: upError } = await supabase.storage
-        .from('member-images')
-        .upload(filePath, file);
-
-      if (upError) throw upError;
-
-      const { data: urlData } = supabase.storage
-        .from('member-images')
-        .getPublicUrl(filePath);
-
-      avatarUrl = urlData.publicUrl;
-    } catch (err) {
-      alert('Fehler beim Upload: ' + (err as Error).message);
-      return;
-    }
-  }
-
-  // 2. DATEN IN TABELLE SPEICHERN (Das ersetzt /.netlify/functions/save-member)
-  try {
-    const { error: saveError } = await supabase
-      .from('members')
-      .insert([
-        {
-          name: draft.name,
-          role: draft.role,
-          clan_role: draft.clan_role,
-          avatar: avatarUrl, // Hier wird die neue URL genutzt!
-          bio: draft.bio,
-          // Falls du games oder tags hast:
-          games: draft.games || [],
-          fun_tags: draft.fun_tags || []
-        }
-      ]);
-
-    if (saveError) throw saveError;
-
-    // Erfolg! Seite neu laden oder Liste aktualisieren
-    alert('Mitglied erfolgreich hinzugefügt!');
-    window.location.reload(); 
-
-  } catch (err) {
-    alert('Fehler beim Speichern: ' + (err as Error).message);
-  }
-}
-
-    const memberPayload = {
-      name: draft.name,
-      role: draft.role,
-      clanRole: draft.clanRole,
-      games: (draft.games || '').split(',').map((s) => s.trim()).filter(Boolean),
-      avatar: avatarUrl,
-      bio: draft.bio,
-      funTags: (draft.funTags || '').split(',').map((s) => s.trim()).filter(Boolean),
-    }
-
-    const token = window.netlifyIdentity && window.netlifyIdentity.currentUser()
-      ? window.netlifyIdentity.currentUser().token.access_token
-      : ''
-
-    const saveRes = await fetch('/.netlify/functions/save-member', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: token ? `Bearer ${token}` : '',
-      },
-      body: JSON.stringify(memberPayload),
-    })
-
-    if (!saveRes.ok) {
-      const err = await saveRes.text()
-      alert('Fehler beim Speichern: ' + err)
-      return
-    }
-
-    const saved = await saveRes.json()
-    setList((prev) => [saved, ...prev])
-    setDraft({ name: '', role: '', clanRole: 'Recruit', games: '', bio: '', funTags: '', avatarFile: null })
-  }
-
-  async function remove(id: string) {
-    if (!confirm('Mitglied wirklich löschen?')) return
-    setList((l) => l.filter((m) => m.id !== id))
   }
 
   return (
@@ -381,14 +360,14 @@ function RosterTab() {
         {list.map((m) => (
           <div key={m.id} className="lg-panel" style={{ padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
             <div style={{ display: 'flex', gap: '0.7rem', alignItems: 'center' }}>
-              <img className="lg-avatar" src={m.avatar} alt={m.name} style={{ width: 50, height: 50 }} />
+              <img className="lg-avatar" src={m.avatar} alt={m.name} style={{ width: 50, height: 50, objectFit: 'cover', borderRadius: '4px' }} />
               <div>
                 <div style={{ fontFamily: 'var(--font-headline)', textTransform: 'uppercase' }}>{m.name}</div>
-                <div className="lg-muted" style={{ fontSize: '0.8rem' }}>{m.role} · {m.clanRole}</div>
+                <div className="lg-muted" style={{ fontSize: '0.8rem' }}>{m.role} · {m.clan_role}</div>
               </div>
             </div>
             <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
-              {(m.games || []).map((g) => <span key={g} className={gameTagClass(g)}>{g}</span>)}
+              {(m.games || []).map((g) => <span key={g} className="lg-tag">{g}</span>)}
             </div>
             <div style={{ display: 'flex', gap: '0.4rem' }}>
               <button className="lg-btn" style={{ flex: 1 }}>Bearbeiten</button>
@@ -398,8 +377,9 @@ function RosterTab() {
         ))}
       </div>
     </>
-  )
+  );
 }
+
 
 /* ==================================================================
    Events, Videos, Banner, EventAnmeldungen... (Rest bleibt identisch)
