@@ -249,28 +249,23 @@ function BewerbungenTab() {
     loadMembers();
   }, []);
 
-  async function add(e: React.FormEvent) {
+    async function add(e: React.FormEvent) {
     e.preventDefault();
     let avatarUrl = '/placeholder.png';
 
     if (draft.avatarFile) {
       try {
         const file = draft.avatarFile;
-        const fileExt = file.name.split('.').pop() || 'jpg';
-        const fileName = `img${Date.now()}.${fileExt}`; 
+        const fileName = `img-${Date.now()}.jpg`;
         const { error: upError } = await supabase.storage
           .from('member-images')
           .upload(fileName, file);
 
         if (upError) throw upError;
-
-        const { data: urlData } = supabase.storage
-          .from('member-images')
-          .getPublicUrl(fileName);
-
+        const { data: urlData } = supabase.storage.from('member-images').getPublicUrl(fileName);
         avatarUrl = urlData.publicUrl;
       } catch (err) {
-        alert('Fehler beim Upload: ' + (err as Error).message);
+        alert('Upload-Fehler: ' + (err as Error).message);
         return;
       }
     }
@@ -290,14 +285,13 @@ function BewerbungenTab() {
         .select();
 
       if (saveError) throw saveError;
-
-      alert('Mitglied erfolgreich hinzugefügt!');
-      if (newData) setList(prev => [newData[0], ...prev]);
-      setDraft({ name: '', role: '', clanRole: 'Recruit', games: '', bio: '', funTags: '', avatarFile: null });
+      alert('Erfolg! Mitglied gespeichert.');
+      window.location.reload(); 
     } catch (err) {
-      alert('Fehler beim Speichern: ' + (err as Error).message);
+      alert('Speicher-Fehler: ' + (err as Error).message);
     }
   }
+
 
   async function remove(id: string) {
     if (!confirm('Mitglied wirklich löschen?')) return;
