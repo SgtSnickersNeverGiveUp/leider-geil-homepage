@@ -257,24 +257,25 @@ function RosterTab() {
     let avatarUrl = '/placeholder.png';
 
     // BILD HOCHLADEN
-    if (draft.avatarFile) {
+                if (draft.avatarFile) {
       try {
         const file = draft.avatarFile;
-        // Sicherer Dateiname ohne Sonderzeichen
-        const fileExt = file.name.split('.').pop();
-        const fileName = `${Date.now()}-${Math.floor(Math.random() * 1000)}.${fileExt}`;
+        // Wir erstellen einen absolut sauberen Namen: nur Zahlen + Endung
+        const fileExt = file.name.split('.').pop() || 'jpg';
+        const fileName = `img${Date.now()}.${fileExt}`; 
         
-        // WICHTIG: Kein "avatars/" davor, falls der Ordner nicht existiert
+        // WICHTIG: Kein Pfad wie "avatars/", sondern nur der Dateiname
         const filePath = fileName; 
 
         const { data: upData, error: upError } = await supabase.storage
           .from('member-images')
-          .upload(filePath, file, {
-            cacheControl: '3600',
-            upsert: false
-          });
+          .upload(filePath, file);
 
-        if (upError) throw upError;
+        if (upError) {
+          // Zeigt uns genau an, was Supabase stört
+          console.error("Supabase Error Detail:", upError);
+          throw upError;
+        }
 
         const { data: urlData } = supabase.storage
           .from('member-images')
@@ -286,6 +287,9 @@ function RosterTab() {
         return;
       }
     }
+
+
+
 
 
     // DATEN IN TABELLE SPEICHERN
