@@ -238,12 +238,9 @@ function BewerbungenTab() {
   )
 }
 
-/* ============================================================
-   Roster
-   ============================================================ */
-
+// Roster (ersetzt die vorhandene RosterTab-Funktion)
 function RosterTab() {
-  const [list, setList] = useState<Member[]>(members as Member[])
+  const [list, setList] = useState<Member[]>([])
   const [draft, setDraft] = useState({
     name: '',
     role: '',
@@ -251,28 +248,87 @@ function RosterTab() {
     games: '',
     bio: '',
     funTags: '',
+    avatarFile: null as File | null,
   })
 
-  function add(e: React.FormEvent) {
+  // helper: file -> DataURL
+  function toBase64(file: File) {
+    return new Promise<string>((resolve, reject) => {
+      const reader = new FileReader()
+      reader.readAsDataURL(file)
+      reader.onload = () => resolve(reader.result as string)
+      reader.onerror = (e) => reject(e)
+    })
+  }
+
+  // load members from function
+  useEffect(() => {
+    fetch('/.netlify/functions/get-members')
+      .then((r) => r.json())
+      .then((data) => setList(data))
+      .catch((err) => console.error('get-members error', err))
+  }, [])
+
+  async function add(e: React.FormEvent) {
     e.preventDefault()
-    const m: Member = {
-      id: 'tmp-' + Date.now(),
+
+    let avatarUrl = '/placeholder.png'
+    if (draft.avatarFile) {
+      try {
+        const dataUrl = await toBase64(draft.avatarFile)
+        const base64 = (dataUrl as string).split(',')[1]
+        const upRes = await fetch('/.netlify/functions/upload-avatar', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ filename: draft.avatarFile.name, fileBase64: base64 }),
+        })
+        const upJson = await upRes.json()
+        if (upRes.ok && upJson.url) avatarUrl = upJson.url
+      } catch (err) {
+        alert('Fehler beim Upload: ' + (err as Error).message)
+        return
+      }
+    }
+
+    const memberPayload = {
       name: draft.name,
       role: draft.role,
       clanRole: draft.clanRole,
-      games: draft.games.split(',').map((s) => s.trim()).filter(Boolean),
+      games: (draft.games || '').split(',').map((s) => s.trim()).filter(Boolean),
+      avatar: avatarUrl,
       bio: draft.bio,
-      funTags: draft.funTags.split(',').map((s) => s.trim()).filter(Boolean),
-      avatar: `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(draft.name || 'new')}`,
+      funTags: (draft.funTags || '').split(',').map((s) => s.trim()).filter(Boolean),
     }
-    // TODO (later): POST /api/admin/roster mit dem Member-Objekt; Avatar-Upload
-    // separat an /api/admin/roster-avatar (Netlify Blobs).
-    setList((l) => [m, ...l])
-    setDraft({ name: '', role: '', clanRole: 'Recruit', games: '', bio: '', funTags: '' })
+
+    // get Netlify Identity token if logged in
+    const token = window.netlifyIdentity && window.netlifyIdentity.currentUser()
+      ? window.netlifyIdentity.currentUser().token.access_token
+      : ''
+
+    const saveRes = await fetch('/.netlify/functions/save-member', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: token ? `Bearer ${token}` : '',
+      },
+      body: JSON.stringify(memberPayload),
+    })
+
+    if (!saveRes.ok) {
+      const err = await saveRes.text()
+      alert('Fehler beim Speichern: ' + err)
+      return
+    }
+
+    const saved = await saveRes.json()
+    setList((prev) => [saved, ...prev])
+    setDraft({ name: '', role: '', clanRole: 'Recruit', games: '', bio: '', funTags: '', avatarFile: null })
   }
 
-  function remove(id: string) {
-    // TODO (later): DELETE /api/admin/roster/:id
+  async function remove(id: string) {
+    // optional: implement function to delete from DB; currently local removal
+    // TODO: call a delete-member function
+    if (!confirm('Mitglied wirklich löschen?')) return
     setList((l) => l.filter((m) => m.id !== id))
   }
 
@@ -292,10 +348,10 @@ function RosterTab() {
           <label><span className="lg-label">Spiele (Komma-getrennt)</span><input className="lg-input" placeholder="PUBG, ARC Raiders" value={draft.games} onChange={(e) => setDraft({ ...draft, games: e.target.value })} /></label>
           <label style={{ gridColumn: '1 / -1' }}><span className="lg-label">Bio</span><textarea className="lg-textarea" value={draft.bio} onChange={(e) => setDraft({ ...draft, bio: e.target.value })} /></label>
           <label style={{ gridColumn: '1 / -1' }}><span className="lg-label">Fun-Tags (Komma-getrennt)</span><input className="lg-input" placeholder="Sniper, Strategist" value={draft.funTags} onChange={(e) => setDraft({ ...draft, funTags: e.target.value })} /></label>
-          {/* Avatar-Upload als UI-Stub */}
+
           <label style={{ gridColumn: '1 / -1' }}>
-            <span className="lg-label">Avatar (Upload – später Netlify Blobs)</span>
-            <input className="lg-input" type="file" />
+            <span className="lg-label">Avatar (Upload)</span>
+            <input className="lg-input" type="file" accept="image/*" onChange={(e) => setDraft({ ...draft, avatarFile: e.target.files?.[0] || null })} />
           </label>
 
           <div style={{ gridColumn: '1 / -1', display: 'flex', justifyContent: 'flex-end' }}>
@@ -316,7 +372,7 @@ function RosterTab() {
               </div>
             </div>
             <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
-              {m.games.map((g) => <span key={g} className={gameTagClass(g)}>{g}</span>)}
+              {(m.games || []).map((g) => <span key={g} className={gameTagClass(g)}>{g}</span>)}
             </div>
             <div style={{ display: 'flex', gap: '0.4rem' }}>
               <button className="lg-btn" style={{ flex: 1 }}>Bearbeiten</button>
