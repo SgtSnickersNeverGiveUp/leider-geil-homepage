@@ -5,8 +5,6 @@ import { OnlineLamp } from './OnlineLamp'
 
 /**
  * Globaler Header inkl. Navigation.
- * - Desktop: horizontale Nav + Discord/Twitch-Buttons mit Online-Lampe.
- * - Mobile: einklappbares Menü.
  */
 const navItems = [
   { to: '/', label: 'Start' },
@@ -22,10 +20,22 @@ export function Header() {
   const [open, setOpen] = useState(false)
 
   useEffect(() => {
-    // Netlify Identity widget callbacks: reload on login/logout to update UI
-    if (typeof window !== 'undefined' && window.netlifyIdentity) {
-      window.netlifyIdentity.on('login', () => window.location.reload())
-      window.netlifyIdentity.on('logout', () => window.location.reload())
+    // load netlify identity widget dynamically if missing and init listeners
+    if (typeof window !== 'undefined' && !window.netlifyIdentity) {
+      const s = document.createElement('script')
+      s.src = 'https://identity.netlify.com/v1/netlify-identity-widget.js'
+      s.onload = () => {
+        if (window.netlifyIdentity) {
+          window.netlifyIdentity.on('login', () => window.location.reload())
+          window.netlifyIdentity.on('logout', () => window.location.reload())
+        }
+      }
+      document.head.appendChild(s)
+    } else {
+      if (typeof window !== 'undefined' && window.netlifyIdentity) {
+        window.netlifyIdentity.on('login', () => window.location.reload())
+        window.netlifyIdentity.on('logout', () => window.location.reload())
+      }
     }
   }, [])
 
@@ -60,166 +70,57 @@ export function Header() {
         }}
       >
         {/* Logo / Clanname */}
-        <Link
-          to="/"
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.6rem',
-            fontFamily: 'var(--font-headline)',
-            fontWeight: 700,
-            fontSize: '1.4rem',
-            letterSpacing: '0.08em',
-            textTransform: 'uppercase',
-            color: 'var(--clr-text)',
-          }}
-        >
-          <span
-            style={{
-              display: 'inline-block',
-              width: 12,
-              height: 12,
-              background: 'var(--clr-accent-arc)',
-              boxShadow: '0 0 12px rgba(15, 242, 169, 0.7)',
-              transform: 'rotate(45deg)',
-            }}
-          />
+        <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', fontFamily: 'var(--font-headline)', fontWeight: 700, fontSize: '1.4rem', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--clr-text)' }}>
+          <span style={{ display: 'inline-block', width: 12, height: 12, background: 'var(--clr-accent-arc)', boxShadow: '0 0 12px rgba(15, 242, 169, 0.7)', transform: 'rotate(45deg)' }} />
           <span>
-            {settings.clanName.split(' ')[0]}{' '}
-            <span style={{ color: 'var(--clr-accent-arc)' }}>
-              {settings.clanName.split(' ').slice(1).join(' ')}
-            </span>
+            {settings.clanName.split(' ')[0]} <span style={{ color: 'var(--clr-accent-arc)' }}>{settings.clanName.split(' ').slice(1).join(' ')}</span>
           </span>
         </Link>
 
         {/* Desktop nav */}
-        <nav
-          aria-label="Hauptnavigation"
-          className="lg-desktop-nav"
-          style={{ display: 'none' }}
-        >
+        <nav aria-label="Hauptnavigation" className="lg-desktop-nav" style={{ display: 'none' }}>
           {navItems.map((n) => (
-            <Link
-              key={n.to}
-              to={n.to}
-              activeProps={{ style: { color: 'var(--clr-accent-arc)' } }}
-              style={{
-                color: 'var(--clr-text)',
-                fontFamily: 'var(--font-headline)',
-                textTransform: 'uppercase',
-                letterSpacing: '0.05em',
-                fontSize: '0.92rem',
-                padding: '0.4rem 0.7rem',
-              }}
-            >
+            <Link key={n.to} to={n.to} activeProps={{ style: { color: 'var(--clr-accent-arc)' } }} style={{ color: 'var(--clr-text)', fontFamily: 'var(--font-headline)', textTransform: 'uppercase', letterSpacing: '0.05em', fontSize: '0.92rem', padding: '0.4rem 0.7rem' }}>
               {n.label}
             </Link>
           ))}
         </nav>
 
         {/* Discord / Twitch + Login */}
-        <div
-          className="lg-social-bar"
-          style={{ display: 'none', alignItems: 'center', gap: '0.6rem' }}
-        >
-          <a
-            href={settings.discordUrl}
-            target="_blank"
-            rel="noreferrer"
-            className="lg-btn"
-            style={{ padding: '0.45rem 0.8rem', fontSize: '0.78rem' }}
-          >
+        <div className="lg-social-bar" style={{ display: 'none', alignItems: 'center', gap: '0.6rem' }}>
+          <a href={settings.discordUrl} target="_blank" rel="noreferrer" className="lg-btn" style={{ padding: '0.45rem 0.8rem', fontSize: '0.78rem' }}>
             <OnlineLamp label="Discord online" /> Discord
           </a>
-          <a
-            href={settings.twitchUrl}
-            target="_blank"
-            rel="noreferrer"
-            className="lg-btn"
-            style={{ padding: '0.45rem 0.8rem', fontSize: '0.78rem' }}
-          >
+          <a href={settings.twitchUrl} target="_blank" rel="noreferrer" className="lg-btn" style={{ padding: '0.45rem 0.8rem', fontSize: '0.78rem' }}>
             <OnlineLamp label="Twitch online" /> Twitch
           </a>
 
           {/* Login / Signup Button */}
-          <button
-            onClick={handleLoginOpen}
-            className="lg-btn"
-            style={{ padding: '0.45rem 0.8rem', fontSize: '0.78rem' }}
-          >
+          <button onClick={handleLoginOpen} className="lg-btn" style={{ padding: '0.45rem 0.8rem', fontSize: '0.78rem' }}>
             Login / Signup
           </button>
         </div>
 
         {/* Mobile burger */}
-        <button
-          className="lg-burger"
-          aria-label="Menü öffnen"
-          onClick={() => setOpen((v) => !v)}
-          style={{
-            display: 'inline-flex',
-            background: 'transparent',
-            border: '1px solid var(--clr-border)',
-            color: 'var(--clr-text)',
-            padding: '0.45rem 0.7rem',
-            borderRadius: 8,
-            cursor: 'pointer',
-            fontFamily: 'var(--font-mono)',
-            fontSize: '0.85rem',
-          }}
-        >
+        <button className="lg-burger" aria-label="Menü öffnen" onClick={() => setOpen((v) => !v)} style={{ display: 'inline-flex', background: 'transparent', border: '1px solid var(--clr-border)', color: 'var(--clr-text)', padding: '0.45rem 0.7rem', borderRadius: 8, cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: '0.85rem' }}>
           {open ? '✕' : '☰'}
         </button>
       </div>
 
       {/* Mobile drawer */}
       {open && (
-        <div
-          style={{
-            borderTop: '1px solid var(--clr-border)',
-            background: 'var(--clr-surface)',
-            padding: '0.5rem 1rem 1rem',
-          }}
-        >
-          <nav
-            aria-label="Mobile Navigation"
-            style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}
-          >
+        <div style={{ borderTop: '1px solid var(--clr-border)', background: 'var(--clr-surface)', padding: '0.5rem 1rem 1rem' }}>
+          <nav aria-label="Mobile Navigation" style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
             {navItems.map((n) => (
-              <Link
-                key={n.to}
-                to={n.to}
-                onClick={() => setOpen(false)}
-                activeProps={{ style: { color: 'var(--clr-accent-arc)' } }}
-                style={{
-                  padding: '0.7rem 0.4rem',
-                  borderBottom: '1px solid var(--clr-border)',
-                  color: 'var(--clr-text)',
-                  fontFamily: 'var(--font-headline)',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.05em',
-                }}
-              >
+              <Link key={n.to} to={n.to} onClick={() => setOpen(false)} activeProps={{ style: { color: 'var(--clr-accent-arc)' } }} style={{ padding: '0.7rem 0.4rem', borderBottom: '1px solid var(--clr-border)', color: 'var(--clr-text)', fontFamily: 'var(--font-headline)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                 {n.label}
               </Link>
             ))}
             <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.7rem' }}>
-              <a
-                href={settings.discordUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="lg-btn"
-                style={{ flex: 1, justifyContent: 'center' }}
-              >
+              <a href={settings.discordUrl} target="_blank" rel="noreferrer" className="lg-btn" style={{ flex: 1, justifyContent: 'center' }}>
                 <OnlineLamp /> Discord
               </a>
-              <a
-                href={settings.twitchUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="lg-btn"
-                style={{ flex: 1, justifyContent: 'center' }}
-              >
+              <a href={settings.twitchUrl} target="_blank" rel="noreferrer" className="lg-btn" style={{ flex: 1, justifyContent: 'center' }}>
                 <OnlineLamp /> Twitch
               </a>
 
