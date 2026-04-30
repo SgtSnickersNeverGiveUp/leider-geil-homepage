@@ -15,27 +15,31 @@ function RosterPage() {
   const [list, setList] = useState<Member[]>([]) // State für die Live-Daten
 
   // Daten live von Supabase laden
-  useEffect(() => {
+    useEffect(() => {
     const fetchMembers = async () => {
       const { data, error } = await supabase
         .from('members')
         .select('*')
-        .order('created_at', { ascending: false })
+        .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('Fehler beim Laden:', error)
+        console.error('Fehler beim Laden:', error);
       } else {
-        // Wir mappen die Datenbank-Felder (clan_role) auf dein Interface (clanRole)
+        // Sicherere Konvertierung der Daten
         const formattedData = (data || []).map((m: any) => ({
           ...m,
-          clanRole: m.clan_role, // Mappt Unterstrich auf CamelCase
-          funTags: m.fun_tags    // Mappt Unterstrich auf CamelCase
-        }))
-        setList(formattedData)
+          // Wir stellen sicher, dass clanRole immer existiert
+          clanRole: m.clan_role || m.clanRole || 'Member',
+          // Wir stellen sicher, dass games und funTags immer Arrays sind
+          games: Array.isArray(m.games) ? m.games : [],
+          funTags: Array.isArray(m.fun_tags) ? m.fun_tags : (Array.isArray(m.funTags) ? m.funTags : [])
+        }));
+        setList(formattedData);
       }
-    }
-    fetchMembers()
-  }, [])
+    };
+    fetchMembers();
+  }, []);
+
 
   return (
     <div style={{ maxWidth: 1280, margin: '0 auto', padding: '2rem 1.25rem' }}>
