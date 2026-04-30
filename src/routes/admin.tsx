@@ -260,13 +260,19 @@ function RosterTab() {
     if (draft.avatarFile) {
       try {
         const file = draft.avatarFile;
+        // Sicherer Dateiname ohne Sonderzeichen
         const fileExt = file.name.split('.').pop();
-        const fileName = `${Math.random()}.${fileExt}`;
-        const filePath = `avatars/${fileName}`;
+        const fileName = `${Date.now()}-${Math.floor(Math.random() * 1000)}.${fileExt}`;
+        
+        // WICHTIG: Kein "avatars/" davor, falls der Ordner nicht existiert
+        const filePath = fileName; 
 
         const { data: upData, error: upError } = await supabase.storage
           .from('member-images')
-          .upload(filePath, file);
+          .upload(filePath, file, {
+            cacheControl: '3600',
+            upsert: false
+          });
 
         if (upError) throw upError;
 
@@ -280,6 +286,7 @@ function RosterTab() {
         return;
       }
     }
+
 
     // DATEN IN TABELLE SPEICHERN
     try {
