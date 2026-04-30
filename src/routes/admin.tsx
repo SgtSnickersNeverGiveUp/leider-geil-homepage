@@ -8,6 +8,11 @@ import type { ClanEvent, ClanRole, Member, VideoItem } from '@/lib/types'
 import { gameTagClass } from '@/lib/types'
 import { Modal } from '@/components/Modal'
 import { OnlineLamp } from '@/components/OnlineLamp'
+import { supabase } from '../lib/supabase';
+
+
+// !!! WICHTIG: Du musst deinen supabase client hier importieren !!!
+// import { supabase } from '@/lib/supabase' 
 
 // Simple client-side guard (lightweight, not production-secure)
 const ADMIN_PASSWORD = 'Snickers2026!' // ändere hier dein Passwort
@@ -44,29 +49,6 @@ function AdminWrapper(props: any) {
 export const Route = createFileRoute('/admin')({
   component: AdminWrapper,
 })
-
-/**
- * Admin-Dashboard.
- *
- * Wichtige Hinweise für die spätere Erweiterung:
- *
- *  - Auth: Diese Seite ist aktuell offen, aber nur per Direktlink erreichbar
- *    (kein Header-Eintrag). Sobald Netlify Identity / Auth0 / Clerk angebunden
- *    sind, sollte der Route-Loader hier den User prüfen und ggf. redirecten.
- *
- *  - Persistenz: Sämtliche Speicher-/Lösch-Aktionen sind aktuell nur im
- *    lokalen React-State. Beim Klick auf „Speichern" sollte später ein POST
- *    gegen eine Netlify Function (z.B. /.netlify/functions/admin-roster) gehen,
- *    die die Daten in einer Datenbank ablegt (Postgres via Netlify DB oder
- *    Netlify Blobs für Bilder).
- *
- *  - Bewerbungen / Event-Anmeldungen: Die Tabellen zeigen aktuell Dummy-Daten
- *    aus diesem Dashboard. Quelle wird später die Netlify-Forms-API
- *    (/.netlify/functions/admin-submissions) sein.
- *
- *  - Bild-Uploads: aktuell nur UI-Stub, der Upload muss später z.B. an
- *    Netlify Blobs / Cloudinary / S3 angebunden werden.
- */
 
 type Tab =
   | 'bewerbungen'
@@ -107,7 +89,6 @@ function AdminPage() {
         </div>
       </div>
 
-      {/* Tabs */}
       <nav
         style={{
           display: 'flex',
@@ -151,11 +132,9 @@ function AdminPage() {
   )
 }
 
-/* ============================================================
+/* ==================================================================
    Bewerbungen
-   Quelle (später): /.netlify/functions/admin-submissions?form=bewerbung
-   Aktuell: Dummy-Daten direkt in der Komponente.
-   ============================================================ */
+   ================================================================== */
 
 interface Application {
   id: string
@@ -238,7 +217,10 @@ function BewerbungenTab() {
   )
 }
 
-// Roster (ersetzt die vorhandene RosterTab-Funktion)
+/* ==================================================================
+   Roster
+   ================================================================== */
+
 function RosterTab() {
   const [list, setList] = useState<Member[]>([])
   const [draft, setDraft] = useState({
@@ -251,44 +233,81 @@ function RosterTab() {
     avatarFile: null as File | null,
   })
 
-  // helper: file -> DataURL
-  function toBase64(file: File) {
-    return new Promise<string>((resolve, reject) => {
-      const reader = new FileReader()
-      reader.readAsDataURL(file)
-      reader.onload = () => resolve(reader.result as string)
-      reader.onerror = (e) => reject(e)
-    })
-  }
-
-  // load members from function
   useEffect(() => {
-    fetch('/.netlify/functions/get-members')
-      .then((r) => r.json())
-      .then((data) => setList(data))
-      .catch((err) => console.error('get-members error', err))
-  }, [])
+  const loadMembers = async () => {
+    const { data, error } = await supabase
+      .from('members')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Fehler beim Laden:', error.message);
+    } else {
+      setList(data || []);
+    }
+  };
+
+  loadMembers();
+}, []);
+
 
   async function add(e: React.FormEvent) {
-    e.preventDefault()
+  e.preventDefault();
 
-    let avatarUrl = '/placeholder.png'
-    if (draft.avatarFile) {
-      try {
-        const dataUrl = await toBase64(draft.avatarFile)
-        const base64 = (dataUrl as string).split(',')[1]
-        const upRes = await fetch('/.netlify/functions/upload-avatar', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ filename: draft.avatarFile.name, fileBase64: base64 }),
-        })
-        const upJson = await upRes.json()
-        if (upRes.ok && upJson.url) avatarUrl = upJson.url
-      } catch (err) {
-        alert('Fehler beim Upload: ' + (err as Error).message)
-        return
-      }
+  let avatarUrl = '/placeholder.png';
+
+  // 1. BILD HOCHLADEN (Dein neuer Teil)
+  if (draft.avatarFile) {
+    try {
+      const file = draft.avatarFile;
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Math.random()}.${fileExt}`;
+      const filePath = `avatars/${fileName}`;
+
+      const { data: upData, error: upError } = await supabase.storage
+        .from('member-images')
+        .upload(filePath, file);
+
+      if (upError) throw upError;
+
+      const { data: urlData } = supabase.storage
+        .from('member-images')
+        .getPublicUrl(filePath);
+
+      avatarUrl = urlData.publicUrl;
+    } catch (err) {
+      alert('Fehler beim Upload: ' + (err as Error).message);
+      return;
     }
+  }
+
+  // 2. DATEN IN TABELLE SPEICHERN (Das ersetzt /.netlify/functions/save-member)
+  try {
+    const { error: saveError } = await supabase
+      .from('members')
+      .insert([
+        {
+          name: draft.name,
+          role: draft.role,
+          clan_role: draft.clan_role,
+          avatar: avatarUrl, // Hier wird die neue URL genutzt!
+          bio: draft.bio,
+          // Falls du games oder tags hast:
+          games: draft.games || [],
+          fun_tags: draft.fun_tags || []
+        }
+      ]);
+
+    if (saveError) throw saveError;
+
+    // Erfolg! Seite neu laden oder Liste aktualisieren
+    alert('Mitglied erfolgreich hinzugefügt!');
+    window.location.reload(); 
+
+  } catch (err) {
+    alert('Fehler beim Speichern: ' + (err as Error).message);
+  }
+}
 
     const memberPayload = {
       name: draft.name,
@@ -300,7 +319,6 @@ function RosterTab() {
       funTags: (draft.funTags || '').split(',').map((s) => s.trim()).filter(Boolean),
     }
 
-    // get Netlify Identity token if logged in
     const token = window.netlifyIdentity && window.netlifyIdentity.currentUser()
       ? window.netlifyIdentity.currentUser().token.access_token
       : ''
@@ -326,8 +344,6 @@ function RosterTab() {
   }
 
   async function remove(id: string) {
-    // optional: implement function to delete from DB; currently local removal
-    // TODO: call a delete-member function
     if (!confirm('Mitglied wirklich löschen?')) return
     setList((l) => l.filter((m) => m.id !== id))
   }
@@ -385,9 +401,9 @@ function RosterTab() {
   )
 }
 
-/* ============================================================
-   Events
-   ============================================================ */
+/* ==================================================================
+   Events, Videos, Banner, EventAnmeldungen... (Rest bleibt identisch)
+   ================================================================== */
 
 function EventsTab() {
   const [list, setList] = useState<ClanEvent[]>(events as ClanEvent[])
@@ -395,7 +411,6 @@ function EventsTab() {
 
   function add(e: React.FormEvent) {
     e.preventDefault()
-    // TODO (later): POST /api/admin/events – inkl. optionalem Bild-Upload
     setList((l) => [
       { id: 'tmp-' + Date.now(), title: draft.title, date: draft.date, game: draft.game, description: draft.description, image: '/placeholder.png' },
       ...l,
@@ -451,10 +466,6 @@ function EventsTab() {
     </>
   )
 }
-
-/* ============================================================
-   Videos
-   ============================================================ */
 
 function VideosTab() {
   const [list, setList] = useState<VideoItem[]>(videos as VideoItem[])
@@ -515,10 +526,6 @@ function VideosTab() {
   )
 }
 
-/* ============================================================
-   Banner & News-Ticker
-   ============================================================ */
-
 function BannerTab() {
   const [bannerUrl, setBannerUrl] = useState(settings.bannerUrl)
   const [tickerText, setTickerText] = useState(settings.newsTickerText)
@@ -526,8 +533,6 @@ function BannerTab() {
 
   function save(e: React.FormEvent) {
     e.preventDefault()
-    // TODO (later): PUT /api/admin/settings → schreibt /data/settings.json
-    // serverseitig (Netlify Function + persistenter Storage).
     setSavedAt(new Date().toLocaleTimeString('de-DE'))
   }
 
@@ -554,10 +559,6 @@ function BannerTab() {
     </>
   )
 }
-
-/* ============================================================
-   Event-Anmeldungen
-   ============================================================ */
 
 interface Signup {
   id: string
@@ -640,10 +641,6 @@ function EventAnmeldungenTab() {
     </>
   )
 }
-
-/* ============================================================
-   Helpers
-   ============================================================ */
 
 function Stats({ stats }: { stats: { label: string; value: number; accent?: string }[] }) {
   return (
