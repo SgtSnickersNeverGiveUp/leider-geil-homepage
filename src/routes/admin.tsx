@@ -221,28 +221,52 @@ function BewerbungenTab() {
    Roster
    ================================================================== */
 
+  function RosterTab() {
+  const [list, setList] = useState<Member[]>([])
+  const [draft, setDraft] = useState({
+    name: '',
+    role: '',
+    clanRole: 'Recruit' as ClanRole,
+    games: '',
+    bio: '',
+    funTags: '',
+    avatarFile: null as File | null,
+  })
+
+  useEffect(() => {
+    const loadMembers = async () => {
+      const { data, error } = await supabase
+        .from('members')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Fehler beim Laden:', error.message);
+      } else {
+        setList(data || []);
+      }
+    };
+    loadMembers();
+  }, []);
+
   async function add(e: React.FormEvent) {
     e.preventDefault();
-
     let avatarUrl = '/placeholder.png';
 
-    // 1. BILD HOCHLADEN
     if (draft.avatarFile) {
       try {
         const file = draft.avatarFile;
         const fileExt = file.name.split('.').pop() || 'jpg';
         const fileName = `img${Date.now()}.${fileExt}`; 
-        const filePath = fileName; 
-
         const { error: upError } = await supabase.storage
           .from('member-images')
-          .upload(filePath, file);
+          .upload(fileName, file);
 
         if (upError) throw upError;
 
         const { data: urlData } = supabase.storage
           .from('member-images')
-          .getPublicUrl(filePath);
+          .getPublicUrl(fileName);
 
         avatarUrl = urlData.publicUrl;
       } catch (err) {
@@ -251,64 +275,35 @@ function BewerbungenTab() {
       }
     }
 
-    // 2. DATEN IN TABELLE SPEICHERN
     try {
       const { data: newData, error: saveError } = await supabase
         .from('members')
-        .insert([
-          {
-            name: draft.name,
-            role: draft.role,
-            clan_role: draft.clanRole,
-            avatar: avatarUrl,
-            bio: draft.bio,
-            games: draft.games ? draft.games.split(',').map(s => s.trim()).filter(Boolean) : [],
-            fun_tags: draft.funTags ? draft.funTags.split(',').map(s => s.trim()).filter(Boolean) : []
-          }
-        ])
+        .insert([{
+          name: draft.name,
+          role: draft.role,
+          clan_role: draft.clanRole,
+          avatar: avatarUrl,
+          bio: draft.bio,
+          games: draft.games ? draft.games.split(',').map(s => s.trim()).filter(Boolean) : [],
+          fun_tags: draft.funTags ? draft.funTags.split(',').map(s => s.trim()).filter(Boolean) : []
+        }])
         .select();
 
       if (saveError) throw saveError;
 
       alert('Mitglied erfolgreich hinzugefügt!');
-      
-      // 3. LISTE AKTUALISIEREN (Sichere Variante für den Build)
-      if (newData && newData.length > 0) {
-        const addedMember = newData[0] as Member;
-        setList(prev => [addedMember, ...prev]);
-      }
-      
-      setDraft({ 
-        name: '', 
-        role: '', 
-        clanRole: 'Recruit', 
-        games: '', 
-        bio: '', 
-        funTags: '', 
-        avatarFile: null 
-      });
-
+      if (newData) setList(prev => [newData[0], ...prev]);
+      setDraft({ name: '', role: '', clanRole: 'Recruit', games: '', bio: '', funTags: '', avatarFile: null });
     } catch (err) {
       alert('Fehler beim Speichern: ' + (err as Error).message);
     }
   }
 
-
-
-  // 3. Löschen-Funktion (Jetzt auch für Supabase!)
   async function remove(id: string) {
     if (!confirm('Mitglied wirklich löschen?')) return;
-    
-    const { error } = await supabase
-      .from('members')
-      .delete()
-      .eq('id', id);
-
-    if (error) {
-      alert('Fehler beim Löschen: ' + error.message);
-    } else {
-      setList((l) => l.filter((m) => m.id !== id));
-    }
+    const { error } = await supabase.from('members').delete().eq('id', id);
+    if (error) alert('Fehler: ' + error.message);
+    else setList(l => l.filter(m => m.id !== id));
   }
 
   return (
@@ -327,12 +322,10 @@ function BewerbungenTab() {
           <label><span className="lg-label">Spiele (Komma-getrennt)</span><input className="lg-input" placeholder="PUBG, ARC Raiders" value={draft.games} onChange={(e) => setDraft({ ...draft, games: e.target.value })} /></label>
           <label style={{ gridColumn: '1 / -1' }}><span className="lg-label">Bio</span><textarea className="lg-textarea" value={draft.bio} onChange={(e) => setDraft({ ...draft, bio: e.target.value })} /></label>
           <label style={{ gridColumn: '1 / -1' }}><span className="lg-label">Fun-Tags (Komma-getrennt)</span><input className="lg-input" placeholder="Sniper, Strategist" value={draft.funTags} onChange={(e) => setDraft({ ...draft, funTags: e.target.value })} /></label>
-
           <label style={{ gridColumn: '1 / -1' }}>
             <span className="lg-label">Avatar (Upload)</span>
             <input className="lg-input" type="file" accept="image/*" onChange={(e) => setDraft({ ...draft, avatarFile: e.target.files?.[0] || null })} />
           </label>
-
           <div style={{ gridColumn: '1 / -1', display: 'flex', justifyContent: 'flex-end' }}>
             <button className="lg-btn lg-btn-primary" type="submit">Speichern</button>
           </div>
@@ -344,7 +337,7 @@ function BewerbungenTab() {
         {list.map((m) => (
           <div key={m.id} className="lg-panel" style={{ padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
             <div style={{ display: 'flex', gap: '0.7rem', alignItems: 'center' }}>
-              <img className="lg-avatar" src={m.avatar} alt={m.name} style={{ width: 50, height: 50, objectFit: 'cover', borderRadius: '4px' }} />
+              <img className="lg-avatar" src={m.avatar} alt={m.name} style={{ width: 50, height: 50, objectFit: 'cover' }} />
               <div>
                 <div style={{ fontFamily: 'var(--font-headline)', textTransform: 'uppercase' }}>{m.name}</div>
                 <div className="lg-muted" style={{ fontSize: '0.8rem' }}>{m.role} · {m.clan_role}</div>
@@ -354,15 +347,15 @@ function BewerbungenTab() {
               {(m.games || []).map((g) => <span key={g} className="lg-tag">{g}</span>)}
             </div>
             <div style={{ display: 'flex', gap: '0.4rem' }}>
-              <button className="lg-btn" style={{ flex: 1 }}>Bearbeiten</button>
               <button className="lg-btn lg-btn-danger" style={{ flex: 1 }} onClick={() => remove(m.id)}>Löschen</button>
             </div>
           </div>
         ))}
       </div>
     </>
-  );
+  )
 }
+
 
 
 /* ==================================================================
