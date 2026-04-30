@@ -221,61 +221,24 @@ function BewerbungenTab() {
    Roster
    ================================================================== */
 
-function RosterTab() {
-  const [list, setList] = useState<Member[]>([])
-  const [draft, setDraft] = useState({
-    name: '',
-    role: '',
-    clanRole: 'Recruit' as ClanRole,
-    games: '',
-    bio: '',
-    funTags: '',
-    avatarFile: null as File | null,
-  })
-
-  // 1. Members laden beim Start
-  useEffect(() => {
-    const loadMembers = async () => {
-      const { data, error } = await supabase
-        .from('members')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        console.error('Fehler beim Laden:', error.message);
-      } else {
-        setList(data || []);
-      }
-    };
-    loadMembers();
-  }, []);
-
-  // 2. Hinzufügen-Funktion
-  async function add(e: React.FormEvent) {
+f  async function add(e: React.FormEvent) {
     e.preventDefault();
 
     let avatarUrl = '/placeholder.png';
 
-    // BILD HOCHLADEN
-                if (draft.avatarFile) {
+    // 1. BILD HOCHLADEN
+    if (draft.avatarFile) {
       try {
         const file = draft.avatarFile;
-        // Wir erstellen einen absolut sauberen Namen: nur Zahlen + Endung
         const fileExt = file.name.split('.').pop() || 'jpg';
         const fileName = `img${Date.now()}.${fileExt}`; 
-        
-        // WICHTIG: Kein Pfad wie "avatars/", sondern nur der Dateiname
         const filePath = fileName; 
 
-        const { data: upData, error: upError } = await supabase.storage
+        const { error: upError } = await supabase.storage
           .from('member-images')
           .upload(filePath, file);
 
-        if (upError) {
-          // Zeigt uns genau an, was Supabase stört
-          console.error("Supabase Error Detail:", upError);
-          throw upError;
-        }
+        if (upError) throw upError;
 
         const { data: urlData } = supabase.storage
           .from('member-images')
@@ -288,11 +251,7 @@ function RosterTab() {
       }
     }
 
-
-
-
-
-    // DATEN IN TABELLE SPEICHERN
+    // 2. DATEN IN TABELLE SPEICHERN
     try {
       const { data: newData, error: saveError } = await supabase
         .from('members')
@@ -300,27 +259,42 @@ function RosterTab() {
           {
             name: draft.name,
             role: draft.role,
-            clan_role: draft.clanRole,
+            clan_role: draft.clanRole, // Muss in der DB klein mit Unterstrich sein
             avatar: avatarUrl,
             bio: draft.bio,
-            games: draft.games ? draft.games.split(',').map(s => s.trim()) : [],
-            fun_tags: draft.funTags ? draft.funTags.split(',').map(s => s.trim()) : []
+            games: draft.games ? draft.games.split(',').map(s => s.trim()).filter(Boolean) : [],
+            fun_tags: draft.funTags ? draft.funTags.split(',').map(s => s.trim()).filter(Boolean) : []
           }
         ])
-        .select();
+        .select(); // WICHTIG: Gibt das neu erstellte Objekt zurück
 
       if (saveError) throw saveError;
 
+      // 3. ERFOLGSMELDUNG UND RESET
       alert('Mitglied erfolgreich hinzugefügt!');
       
-      // Liste aktualisieren und Formular leeren
-      if (newData) setList(prev => [newData[0], ...prev]);
-      setDraft({ name: '', role: '', clanRole: 'Recruit', games: '', bio: '', funTags: '', avatarFile: null });
+      // Liste sofort aktualisieren ohne Refresh
+      if (newData && newData.length > 0) {
+        setList(prev => [newData[0] as Member, ...prev]);
+      }
+      
+      // Formular zurücksetzen
+      setDraft({ 
+        name: '', 
+        role: '', 
+        clanRole: 'Recruit', 
+        games: '', 
+        bio: '', 
+        funTags: '', 
+        avatarFile: null 
+      });
 
     } catch (err) {
+      console.error("DB Save Error:", err);
       alert('Fehler beim Speichern: ' + (err as Error).message);
     }
   }
+
 
   // 3. Löschen-Funktion (Jetzt auch für Supabase!)
   async function remove(id: string) {
