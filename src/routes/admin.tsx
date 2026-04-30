@@ -1,347 +1,115 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useState, useEffect } from 'react'
-import members from '@/data/members.json'
-import events from '@/data/events.json'
-import videos from '@/data/videos.json'
-import settings from '@/data/settings.json'
-import type { ClanEvent, ClanRole, Member, VideoItem } from '@/lib/types'
-import { gameTagClass } from '@/lib/types'
-import { Modal } from '@/components/Modal'
-import { OnlineLamp } from '@/components/OnlineLamp'
-import { supabase } from '../lib/supabase';
-
-
-// !!! WICHTIG: Du musst deinen supabase client hier importieren !!!
-// import { supabase } from '@/lib/supabase' 
-
-// Simple client-side guard (lightweight, not production-secure)
-const ADMIN_PASSWORD = 'Snickers2026!' // ändere hier dein Passwort
-
-function AdminWrapper(props: any) {
-  const [authorized, setAuthorized] = useState(false)
-  const [pw, setPw] = useState('')
-
-  if (!authorized) {
-    return (
-      <div style={{ maxWidth: 480, margin: '4rem auto', padding: '1rem' }}>
-        <h2>Admin Login</h2>
-        <p style={{ color: 'var(--clr-text-muted)' }}>Dieser Bereich ist nur für Admins. Bitte Passwort eingeben.</p>
-        <input
-          type="password"
-          value={pw}
-          onChange={(e) => setPw(e.target.value)}
-          placeholder="Admin-Passwort"
-          style={{ width: '100%', padding: '.6rem', marginBottom: '.6rem', borderRadius: 6, border: '1px solid var(--clr-border)', background: 'var(--clr-bg)', color: 'var(--clr-text)' }}
-        />
-        <div style={{ display: 'flex', gap: '.6rem' }}>
-          <button className="lg-btn" onClick={() => { if (pw === ADMIN_PASSWORD) setAuthorized(true); else alert('Falsches Passwort'); }}>
-            Login
-          </button>
-          <button className="btn-sm" onClick={() => setPw('')}>Zurücksetzen</button>
-        </div>
-      </div>
-    )
-  }
-
-  return <AdminPage {...props} />
-}
+import { supabase } from '@/lib/supabase'
+import type { Member, ClanRole, ClanEvent } from '@/lib/types'
 
 export const Route = createFileRoute('/admin')({
-  component: AdminWrapper,
+  component: AdminPage,
 })
 
-type Tab =
-  | 'bewerbungen'
-  | 'roster'
-  | 'events'
-  | 'videos'
-  | 'banner'
-  | 'event-anmeldungen'
-
-const TABS: { id: Tab; label: string }[] = [
-  { id: 'bewerbungen', label: 'Bewerbungen' },
-  { id: 'roster', label: 'Clan Roster' },
-  { id: 'events', label: 'Events' },
-  { id: 'videos', label: 'Videos' },
-  { id: 'banner', label: 'Banner & News-Ticker' },
-  { id: 'event-anmeldungen', label: 'Event-Anmeldungen' },
-]
-
 function AdminPage() {
-  const [tab, setTab] = useState<Tab>('bewerbungen')
+  const [tab, setTab] = useState<'roster' | 'events'>('roster')
 
   return (
-    <div style={{ maxWidth: 1280, margin: '0 auto', padding: '2rem 1.25rem' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: '1rem' }}>
-        <div>
-          <div className="mono lg-muted" style={{ fontSize: '0.78rem', letterSpacing: '0.18em' }}>
-            // ADMIN AREA
-          </div>
-          <h1 style={{ margin: '0.3rem 0 0', fontSize: '2rem' }}>
-            Dashboard <span style={{ color: 'var(--clr-accent-arc)' }}>Leider Geil</span>
-          </h1>
-          <p className="lg-muted" style={{ marginTop: '0.4rem' }}>
-            Interner Bereich – aktuell ohne Auth. Daten werden noch nicht persistiert.
-          </p>
-        </div>
-        <div className="lg-panel" style={{ padding: '0.6rem 0.9rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <OnlineLamp /> <span className="mono" style={{ fontSize: '0.8rem' }}>session: dev-mode</span>
-        </div>
+    <div style={{ maxWidth: 1000, margin: '2rem auto', padding: '0 1.25rem' }}>
+      <h1>Admin Dashboard</h1>
+      <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem' }}>
+        <button className={`lg-btn ${tab === 'roster' ? 'lg-btn-primary' : ''}`} onClick={() => setTab('roster')}>Mitglieder</button>
+        <button className={`lg-btn ${tab === 'events' ? 'lg-btn-primary' : ''}`} onClick={() => setTab('events')}>Events</button>
       </div>
 
-      <nav
-        style={{
-          display: 'flex',
-          gap: '0.4rem',
-          marginTop: '1.5rem',
-          flexWrap: 'wrap',
-          borderBottom: '1px solid var(--clr-border)',
-          paddingBottom: '0.6rem',
-        }}
-      >
-        {TABS.map((t) => {
-          const active = tab === t.id
-          return (
-            <button
-              key={t.id}
-              onClick={() => setTab(t.id)}
-              className="lg-btn"
-              style={{
-                padding: '0.5rem 0.9rem',
-                fontSize: '0.78rem',
-                borderColor: active ? 'var(--clr-accent-arc)' : 'var(--clr-border)',
-                color: active ? 'var(--clr-accent-arc)' : 'var(--clr-text)',
-                boxShadow: active ? '0 0 14px rgba(15, 242, 169, 0.25)' : 'none',
-              }}
-            >
-              {t.label}
-            </button>
-          )
-        })}
-      </nav>
-
-      <div style={{ marginTop: '1.5rem' }}>
-        {tab === 'bewerbungen' && <BewerbungenTab />}
-        {tab === 'roster' && <RosterTab />}
-        {tab === 'events' && <EventsTab />}
-        {tab === 'videos' && <VideosTab />}
-        {tab === 'banner' && <BannerTab />}
-        {tab === 'event-anmeldungen' && <EventAnmeldungenTab />}
-      </div>
+      {tab === 'roster' ? <RosterTab /> : <EventsTab />}
     </div>
   )
 }
 
-/* ==================================================================
-   Bewerbungen
-   ================================================================== */
-
-interface Application {
-  id: string
-  name: string
-  alter: number
-  spiel: string
-  rolle: string
-  text: string
-  date: string
-}
-
-const dummyApplications: Application[] = [
-  { id: 'a1', name: 'NeonPanda', alter: 22, spiel: 'PUBG', rolle: 'Member', text: 'Ich spiele gerne im Squad und bringe Erfahrung aus Liga-Matches mit.', date: '2026-04-21' },
-  { id: 'a2', name: 'CtrlAltDel', alter: 28, spiel: 'ARC Raiders', rolle: 'Officer', text: 'Suche festen Clan, in dem auch Strategie zählt.', date: '2026-04-19' },
-  { id: 'a3', name: 'BananaCrash', alter: 19, spiel: 'PUBG', rolle: 'Recruit', text: 'Erstkontakt – Spaß steht für mich klar im Vordergrund.', date: '2026-04-17' },
-]
-
-function BewerbungenTab() {
-  const [open, setOpen] = useState<Application | null>(null)
-  const total = dummyApplications.length
-  const pubg = dummyApplications.filter((a) => a.spiel === 'PUBG').length
-  const arc = dummyApplications.filter((a) => a.spiel === 'ARC Raiders').length
-
-  return (
-    <>
-      <Stats stats={[
-        { label: 'Bewerbungen', value: total },
-        { label: 'PUBG', value: pubg, accent: 'var(--clr-accent-pubg)' },
-        { label: 'ARC Raiders', value: arc, accent: 'var(--clr-accent-arc)' },
-      ]} />
-
-      <div className="lg-panel" style={{ padding: '0', overflowX: 'auto' }}>
-        <table className="lg-table">
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Alter</th>
-              <th>Spiel</th>
-              <th>Rolle</th>
-              <th>Kurztext</th>
-              <th>Datum</th>
-              <th />
-            </tr>
-          </thead>
-          <tbody>
-            {dummyApplications.map((a) => (
-              <tr key={a.id}>
-                <td><strong>{a.name}</strong></td>
-                <td>{a.alter}</td>
-                <td><span className={gameTagClass(a.spiel)}>{a.spiel}</span></td>
-                <td>{a.rolle}</td>
-                <td style={{ maxWidth: 280, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a.text}</td>
-                <td className="mono lg-muted" style={{ fontSize: '0.8rem' }}>{a.date}</td>
-                <td>
-                  <button className="lg-btn" style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem' }} onClick={() => setOpen(a)}>
-                    Details
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      <Modal open={!!open} onClose={() => setOpen(null)} title={open?.name ?? ''}>
-        {open && (
-          <div style={{ display: 'grid', gap: '0.6rem' }}>
-            <KV label="Alter" value={open.alter} />
-            <KV label="Spiel" value={open.spiel} />
-            <KV label="Wunschrolle" value={open.rolle} />
-            <KV label="Datum" value={open.date} />
-            <div>
-              <span className="lg-label">Motivation</span>
-              <p style={{ margin: 0 }}>{open.text}</p>
-            </div>
-          </div>
-        )}
-      </Modal>
-    </>
-  )
-}
-
-/* ==================================================================
-   Roster
-   ================================================================== */
-
-  function RosterTab() {
+function RosterTab() {
   const [list, setList] = useState<Member[]>([])
+  const [editingId, setEditingId] = useState<string | null>(null)
   const [draft, setDraft] = useState({
-    name: '',
-    role: '',
-    clanRole: 'Recruit' as ClanRole,
-    games: '',
-    bio: '',
-    funTags: '',
-    avatarFile: null as File | null,
+    name: '', role: '', clanRole: 'Recruit' as ClanRole,
+    games: '', bio: '', funTags: '', avatarFile: null as File | null
   })
 
   useEffect(() => {
-    const loadMembers = async () => {
-      const { data, error } = await supabase
-        .from('members')
-        .select('*')
-        .order('created_at', { ascending: false });
+    supabase.from('members').select('*').order('created_at', { ascending: false })
+      .then(({ data }) => setList(data || []))
+  }, [])
 
-      if (error) {
-        console.error('Fehler beim Laden:', error.message);
-      } else {
-        setList(data || []);
-      }
-    };
-    loadMembers();
-  }, []);
+  function startEdit(m: Member) {
+    setEditingId(m.id)
+    setDraft({
+      name: m.name,
+      role: m.role || '',
+      clanRole: m.clan_role as ClanRole,
+      games: (m.games || []).join(', '),
+      bio: m.bio || '',
+      funTags: (m.fun_tags || []).join(', '),
+      avatarFile: null
+    })
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
 
-    async function add(e: React.FormEvent) {
-    e.preventDefault();
-    let avatarUrl = '/placeholder.png';
+  async function add(e: React.FormEvent) {
+    e.preventDefault()
+    let avatarUrl = list.find(m => m.id === editingId)?.avatar || '/placeholder.png'
 
     if (draft.avatarFile) {
-      try {
-        const file = draft.avatarFile;
-        const fileName = `img-${Date.now()}.jpg`;
-        const { error: upError } = await supabase.storage
-          .from('member-images')
-          .upload(fileName, file);
-
-        if (upError) throw upError;
-        const { data: urlData } = supabase.storage.from('member-images').getPublicUrl(fileName);
-        avatarUrl = urlData.publicUrl;
-      } catch (err) {
-        alert('Upload-Fehler: ' + (err as Error).message);
-        return;
+      const fileName = `img-${Date.now()}.jpg`
+      const { data: upData } = await supabase.storage.from('member-images').upload(fileName, draft.avatarFile)
+      if (upData) {
+        avatarUrl = supabase.storage.from('member-images').getPublicUrl(fileName).data.publicUrl
       }
     }
 
-    try {
-      const { data: newData, error: saveError } = await supabase
-        .from('members')
-        .insert([{
-          name: draft.name,
-          role: draft.role,
-          clan_role: draft.clanRole,
-          avatar: avatarUrl,
-          bio: draft.bio,
-          games: draft.games ? draft.games.split(',').map(s => s.trim()).filter(Boolean) : [],
-          fun_tags: draft.funTags ? draft.funTags.split(',').map(s => s.trim()).filter(Boolean) : []
-        }])
-        .select();
-
-      if (saveError) throw saveError;
-      alert('Erfolg! Mitglied gespeichert.');
-      window.location.reload(); 
-    } catch (err) {
-      alert('Speicher-Fehler: ' + (err as Error).message);
+    const payload = {
+      name: draft.name,
+      role: draft.role,
+      clan_role: draft.clanRole,
+      avatar: avatarUrl,
+      bio: draft.bio,
+      games: draft.games.split(',').map(s => s.trim()).filter(Boolean),
+      fun_tags: draft.funTags.split(',').map(s => s.trim()).filter(Boolean)
     }
-  }
 
+    const query = editingId 
+      ? supabase.from('members').update(payload).eq('id', editingId) 
+      : supabase.from('members').insert([payload])
 
-  async function remove(id: string) {
-    if (!confirm('Mitglied wirklich löschen?')) return;
-    const { error } = await supabase.from('members').delete().eq('id', id);
-    if (error) alert('Fehler: ' + error.message);
-    else setList(l => l.filter(m => m.id !== id));
+    const { error } = await query
+    if (error) alert(error.message)
+    else window.location.reload()
   }
 
   return (
     <>
-      <div className="lg-panel" style={{ padding: '1.5rem' }}>
-        <h2 style={{ marginTop: 0 }}>Neues Mitglied hinzufügen</h2>
-        <form onSubmit={add} style={{ display: 'grid', gap: '0.8rem', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
-          <label><span className="lg-label">Name</span><input className="lg-input" required value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} /></label>
-          <label><span className="lg-label">Rolle / Position</span><input className="lg-input" value={draft.role} onChange={(e) => setDraft({ ...draft, role: e.target.value })} /></label>
-          <label>
-            <span className="lg-label">Clan-Rang</span>
-            <select className="lg-select" value={draft.clanRole} onChange={(e) => setDraft({ ...draft, clanRole: e.target.value as ClanRole })}>
-              {(['Leader', 'Co-Leader', 'Officer', 'Member', 'Recruit'] as ClanRole[]).map((r) => <option key={r}>{r}</option>)}
-            </select>
-          </label>
-          <label><span className="lg-label">Spiele (Komma-getrennt)</span><input className="lg-input" placeholder="PUBG, ARC Raiders" value={draft.games} onChange={(e) => setDraft({ ...draft, games: e.target.value })} /></label>
-          <label style={{ gridColumn: '1 / -1' }}><span className="lg-label">Bio</span><textarea className="lg-textarea" value={draft.bio} onChange={(e) => setDraft({ ...draft, bio: e.target.value })} /></label>
-          <label style={{ gridColumn: '1 / -1' }}><span className="lg-label">Fun-Tags (Komma-getrennt)</span><input className="lg-input" placeholder="Sniper, Strategist" value={draft.funTags} onChange={(e) => setDraft({ ...draft, funTags: e.target.value })} /></label>
-          <label style={{ gridColumn: '1 / -1' }}>
-            <span className="lg-label">Avatar (Upload)</span>
-            <input className="lg-input" type="file" accept="image/*" onChange={(e) => setDraft({ ...draft, avatarFile: e.target.files?.[0] || null })} />
-          </label>
-          <div style={{ gridColumn: '1 / -1', display: 'flex', justifyContent: 'flex-end' }}>
-            <button className="lg-btn lg-btn-primary" type="submit">Speichern</button>
-          </div>
+      <div className="lg-panel" style={{ padding: '1.5rem', marginBottom: '2rem' }}>
+        <h2>{editingId ? 'Mitglied bearbeiten' : 'Neues Mitglied'}</h2>
+        <form onSubmit={add} style={{ display: 'grid', gap: '0.8rem' }}>
+          <input className="lg-input" placeholder="Name" required value={draft.name} onChange={e => setDraft({...draft, name: e.target.value})} />
+          <input className="lg-input" placeholder="Rolle" value={draft.role} onChange={e => setDraft({...draft, role: e.target.value})} />
+          <select className="lg-select" value={draft.clanRole} onChange={e => setDraft({...draft, clanRole: e.target.value as ClanRole})}>
+             <option value="Leader">Leader</option><option value="Co-Leader">Co-Leader</option><option value="Officer">Officer</option><option value="Member">Member</option><option value="Recruit">Recruit</option>
+          </select>
+          <textarea className="lg-textarea" placeholder="Bio" value={draft.bio} onChange={e => setDraft({...draft, bio: e.target.value})} />
+          <input className="lg-input" type="file" onChange={e => setDraft({...draft, avatarFile: e.target.files?.[0] || null})} />
+          <button className="lg-btn lg-btn-primary" type="submit">{editingId ? 'Speichern' : 'Hinzufügen'}</button>
+          {editingId && <button className="lg-btn" type="button" onClick={() => window.location.reload()}>Abbrechen</button>}
         </form>
       </div>
 
-      <h2 style={{ marginTop: '2rem' }}>Aktuelle Mitglieder</h2>
-      <div style={{ display: 'grid', gap: '1rem', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))' }}>
-        {list.map((m) => (
-          <div key={m.id} className="lg-panel" style={{ padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
-            <div style={{ display: 'flex', gap: '0.7rem', alignItems: 'center' }}>
-              <img className="lg-avatar" src={m.avatar} alt={m.name} style={{ width: 50, height: 50, objectFit: 'cover' }} />
-              <div>
-                <div style={{ fontFamily: 'var(--font-headline)', textTransform: 'uppercase' }}>{m.name}</div>
-                <div className="lg-muted" style={{ fontSize: '0.8rem' }}>{m.role} · {m.clan_role}</div>
-              </div>
-            </div>
-            <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
-              {(m.games || []).map((g) => <span key={g} className="lg-tag">{g}</span>)}
-            </div>
-            <div style={{ display: 'flex', gap: '0.4rem' }}>
-              <button className="lg-btn lg-btn-danger" style={{ flex: 1 }} onClick={() => remove(m.id)}>Löschen</button>
+      <div style={{ display: 'grid', gap: '1rem' }}>
+        {list.map(m => (
+          <div key={m.id} className="lg-panel" style={{ padding: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div><strong>{m.name}</strong> ({m.clan_role})</div>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <button className="lg-btn" onClick={() => startEdit(m)}>Bearbeiten</button>
+              <button className="lg-btn lg-btn-danger" onClick={async () => {
+                if(confirm('Löschen?')) {
+                  await supabase.from('members').delete().eq('id', m.id);
+                  window.location.reload();
+                }
+              }}>Löschen</button>
             </div>
           </div>
         ))}
@@ -349,268 +117,58 @@ function BewerbungenTab() {
     </>
   )
 }
-
-
-
-/* ==================================================================
-   Events, Videos, Banner, EventAnmeldungen... (Rest bleibt identisch)
-   ================================================================== */
 
 function EventsTab() {
-  const [list, setList] = useState<ClanEvent[]>(events as ClanEvent[])
+  const [list, setList] = useState<ClanEvent[]>([])
+  const [editingId, setEditingId] = useState<string | null>(null)
   const [draft, setDraft] = useState({ title: '', date: '', game: 'PUBG', description: '' })
 
-  function add(e: React.FormEvent) {
-    e.preventDefault()
-    setList((l) => [
-      { id: 'tmp-' + Date.now(), title: draft.title, date: draft.date, game: draft.game, description: draft.description, image: '/placeholder.png' },
-      ...l,
-    ])
-    setDraft({ title: '', date: '', game: 'PUBG', description: '' })
+  useEffect(() => {
+    supabase.from('events').select('*').order('date', { ascending: true })
+      .then(({ data }) => setList(data || []))
+  }, [])
+
+  function startEdit(ev: ClanEvent) {
+    setEditingId(ev.id)
+    setDraft({ title: ev.title, date: ev.date, game: ev.game, description: ev.description || '' })
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
-  function remove(id: string) {
-    setList((l) => l.filter((e) => e.id !== id))
+  async function add(e: React.FormEvent) {
+    e.preventDefault()
+    const payload = { title: draft.title, date: draft.date, game: draft.game, description: draft.description }
+    const query = editingId ? supabase.from('events').update(payload).eq('id', editingId) : supabase.from('events').insert([payload])
+    const { error } = await query
+    if (error) alert(error.message)
+    else window.location.reload()
   }
 
   return (
     <>
-      <div className="lg-panel" style={{ padding: '1.5rem' }}>
-        <h2 style={{ marginTop: 0 }}>Neues Event</h2>
-        <form onSubmit={add} style={{ display: 'grid', gap: '0.8rem', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
-          <label><span className="lg-label">Titel</span><input className="lg-input" required value={draft.title} onChange={(e) => setDraft({ ...draft, title: e.target.value })} /></label>
-          <label><span className="lg-label">Datum</span><input className="lg-input" type="datetime-local" required value={draft.date} onChange={(e) => setDraft({ ...draft, date: e.target.value })} /></label>
-          <label>
-            <span className="lg-label">Spiel</span>
-            <select className="lg-select" value={draft.game} onChange={(e) => setDraft({ ...draft, game: e.target.value })}>
-              <option>PUBG</option>
-              <option>ARC Raiders</option>
-              <option>Mixed</option>
-            </select>
-          </label>
-          <label style={{ gridColumn: '1 / -1' }}><span className="lg-label">Beschreibung</span><textarea className="lg-textarea" value={draft.description} onChange={(e) => setDraft({ ...draft, description: e.target.value })} /></label>
-          <label style={{ gridColumn: '1 / -1' }}>
-            <span className="lg-label">Event-Bild (Upload – später Netlify Blobs / Cloudinary)</span>
-            <input className="lg-input" type="file" />
-          </label>
-          <div style={{ gridColumn: '1 / -1', display: 'flex', justifyContent: 'flex-end' }}>
-            <button className="lg-btn lg-btn-primary" type="submit">Event speichern</button>
-          </div>
+      <div className="lg-panel" style={{ padding: '1.5rem', marginBottom: '2rem' }}>
+        <h2>{editingId ? 'Event bearbeiten' : 'Neues Event'}</h2>
+        <form onSubmit={add} style={{ display: 'grid', gap: '0.8rem' }}>
+          <input className="lg-input" placeholder="Titel" required value={draft.title} onChange={e => setDraft({...draft, title: e.target.value})} />
+          <input className="lg-input" type="date" required value={draft.date} onChange={e => setDraft({...draft, date: e.target.value})} />
+          <input className="lg-input" placeholder="Spiel" value={draft.game} onChange={e => setDraft({...draft, game: e.target.value})} />
+          <textarea className="lg-textarea" placeholder="Beschreibung" value={draft.description} onChange={e => setDraft({...draft, description: e.target.value})} />
+          <button className="lg-btn lg-btn-primary" type="submit">Speichern</button>
         </form>
       </div>
-
-      <h2 style={{ marginTop: '2rem' }}>Geplante Events</h2>
-      <div style={{ display: 'grid', gap: '0.7rem' }}>
-        {list.map((e) => (
-          <div key={e.id} className="lg-panel" style={{ padding: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.6rem' }}>
-            <div>
-              <div style={{ fontWeight: 600 }}>{e.title} <span className={gameTagClass(e.game)} style={{ marginLeft: 8 }}>{e.game}</span></div>
-              <div className="mono lg-muted" style={{ fontSize: '0.78rem' }}>{e.date}</div>
-            </div>
-            <div style={{ display: 'flex', gap: '0.4rem' }}>
-              <button className="lg-btn">Bearbeiten</button>
-              <button className="lg-btn lg-btn-danger" onClick={() => remove(e.id)}>Löschen</button>
-            </div>
+      {list.map(ev => (
+        <div key={ev.id} className="lg-panel" style={{ padding: '1rem', marginBottom: '0.5rem', display: 'flex', justifyContent: 'space-between' }}>
+          <div>{ev.date} - {ev.title} ({ev.game})</div>
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <button className="lg-btn" onClick={() => startEdit(ev)}>Bearbeiten</button>
+            <button className="lg-btn lg-btn-danger" onClick={async () => {
+                if(confirm('Löschen?')) {
+                  await supabase.from('events').delete().eq('id', ev.id);
+                  window.location.reload();
+                }
+              }}>Löschen</button>
           </div>
-        ))}
-      </div>
-    </>
-  )
-}
-
-function VideosTab() {
-  const [list, setList] = useState<VideoItem[]>(videos as VideoItem[])
-  const [draft, setDraft] = useState({ title: '', url: '' })
-
-  function thumbFromYoutube(url: string): string {
-    const m = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([\w-]+)/)
-    return m ? `https://img.youtube.com/vi/${m[1]}/hqdefault.jpg` : '/placeholder.png'
-  }
-
-  function add(e: React.FormEvent) {
-    e.preventDefault()
-    setList((l) => [
-      {
-        id: 'tmp-' + Date.now(),
-        title: draft.title,
-        description: '',
-        url: draft.url,
-        thumbnail: thumbFromYoutube(draft.url),
-        platform: draft.url.includes('twitch') ? 'Twitch' : 'YouTube',
-      },
-      ...l,
-    ])
-    setDraft({ title: '', url: '' })
-  }
-
-  function remove(id: string) {
-    setList((l) => l.filter((v) => v.id !== id))
-  }
-
-  return (
-    <>
-      <div className="lg-panel" style={{ padding: '1.5rem' }}>
-        <h2 style={{ marginTop: 0 }}>Neues Video</h2>
-        <form onSubmit={add} style={{ display: 'grid', gap: '0.8rem', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
-          <label><span className="lg-label">Titel</span><input className="lg-input" required value={draft.title} onChange={(e) => setDraft({ ...draft, title: e.target.value })} /></label>
-          <label><span className="lg-label">YouTube-/Twitch-URL</span><input className="lg-input" required value={draft.url} onChange={(e) => setDraft({ ...draft, url: e.target.value })} /></label>
-          <div style={{ gridColumn: '1 / -1', display: 'flex', justifyContent: 'flex-end' }}>
-            <button className="lg-btn lg-btn-primary" type="submit">Speichern</button>
-          </div>
-        </form>
-      </div>
-
-      <h2 style={{ marginTop: '2rem' }}>Video-Liste</h2>
-      <div style={{ display: 'grid', gap: '1rem', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
-        {list.map((v) => (
-          <div key={v.id} className="lg-panel" style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-            <img src={v.thumbnail} alt={v.title} style={{ aspectRatio: '16/9', objectFit: 'cover' }} />
-            <div style={{ padding: '0.8rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', flex: 1 }}>
-              <div style={{ fontWeight: 600 }}>{v.title}</div>
-              <div className="mono lg-muted" style={{ fontSize: '0.75rem' }}>{v.platform}</div>
-              <button className="lg-btn lg-btn-danger" style={{ marginTop: 'auto' }} onClick={() => remove(v.id)}>Löschen</button>
-            </div>
-          </div>
-        ))}
-      </div>
-    </>
-  )
-}
-
-function BannerTab() {
-  const [bannerUrl, setBannerUrl] = useState(settings.bannerUrl)
-  const [tickerText, setTickerText] = useState(settings.newsTickerText)
-  const [savedAt, setSavedAt] = useState<string | null>(null)
-
-  function save(e: React.FormEvent) {
-    e.preventDefault()
-    setSavedAt(new Date().toLocaleTimeString('de-DE'))
-  }
-
-  return (
-    <>
-      <div className="lg-panel" style={{ padding: '1.5rem' }}>
-        <h2 style={{ marginTop: 0 }}>Banner</h2>
-        <p className="lg-muted" style={{ marginTop: 0 }}>Empfohlen: 1920×600 px.</p>
-        <div style={{ aspectRatio: '24 / 7', borderRadius: 12, overflow: 'hidden', border: '1px solid var(--clr-border)', marginBottom: '1rem' }}>
-          <img src={bannerUrl} alt="Banner-Vorschau" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-        </div>
-        <form onSubmit={save} style={{ display: 'grid', gap: '0.8rem' }}>
-          <label><span className="lg-label">Banner-URL</span><input className="lg-input" value={bannerUrl} onChange={(e) => setBannerUrl(e.target.value)} /></label>
-          <label><span className="lg-label">… oder Datei hochladen (später Netlify Blobs)</span><input className="lg-input" type="file" /></label>
-          <hr className="lg-divider" />
-          <h2 style={{ margin: 0 }}>News-Ticker</h2>
-          <label><span className="lg-label">Standard-Lauftext</span><textarea className="lg-textarea" value={tickerText} onChange={(e) => setTickerText(e.target.value)} /></label>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            {savedAt && <span className="mono" style={{ color: 'var(--clr-accent-arc)' }}>✓ Gespeichert um {savedAt}</span>}
-            <button className="lg-btn lg-btn-primary" type="submit" style={{ marginLeft: 'auto' }}>Speichern</button>
-          </div>
-        </form>
-      </div>
-    </>
-  )
-}
-
-interface Signup {
-  id: string
-  name: string
-  spiel: string
-  clan: string
-  spieler: number
-  bemerkungen: string
-  date: string
-}
-
-const dummySignups: Signup[] = [
-  { id: 's1', name: 'NeonByte', spiel: 'PUBG', clan: 'Leider Geil', spieler: 4, bemerkungen: 'Voller Squad, alle ready.', date: '2026-04-22' },
-  { id: 's2', name: 'StaticHaze', spiel: 'ARC Raiders', clan: 'Solo', spieler: 1, bemerkungen: 'Würde gerne mit Random-Squad spielen.', date: '2026-04-20' },
-  { id: 's3', name: 'CtrlAltDel', spiel: 'PUBG', clan: 'Der astreime', spieler: 4, bemerkungen: 'Allianz-Match-Anfrage.', date: '2026-04-18' },
-]
-
-function EventAnmeldungenTab() {
-  const [list, setList] = useState<Signup[]>(dummySignups)
-  const [open, setOpen] = useState<Signup | null>(null)
-
-  const total = list.length
-  const pubg = list.filter((s) => s.spiel === 'PUBG').length
-  const arc = list.filter((s) => s.spiel === 'ARC Raiders').length
-
-  return (
-    <>
-      <Stats stats={[
-        { label: 'Anmeldungen', value: total },
-        { label: 'PUBG', value: pubg, accent: 'var(--clr-accent-pubg)' },
-        { label: 'ARC Raiders', value: arc, accent: 'var(--clr-accent-arc)' },
-      ]} />
-
-      <div className="lg-panel" style={{ overflowX: 'auto' }}>
-        <table className="lg-table">
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Spiel</th>
-              <th>Clan</th>
-              <th>Spieler</th>
-              <th>Bemerkungen</th>
-              <th>Datum</th>
-              <th />
-            </tr>
-          </thead>
-          <tbody>
-            {list.map((s) => (
-              <tr key={s.id}>
-                <td><strong>{s.name}</strong></td>
-                <td><span className={gameTagClass(s.spiel)}>{s.spiel}</span></td>
-                <td>{s.clan || '—'}</td>
-                <td>{s.spieler}</td>
-                <td style={{ maxWidth: 280, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.bemerkungen}</td>
-                <td className="mono lg-muted" style={{ fontSize: '0.8rem' }}>{s.date}</td>
-                <td style={{ display: 'flex', gap: '0.3rem' }}>
-                  <button className="lg-btn" style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem' }} onClick={() => setOpen(s)}>Details</button>
-                  <button className="lg-btn lg-btn-danger" style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem' }} onClick={() => setList((l) => l.filter((x) => x.id !== s.id))}>×</button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      <Modal open={!!open} onClose={() => setOpen(null)} title={open?.name ?? ''}>
-        {open && (
-          <div style={{ display: 'grid', gap: '0.6rem' }}>
-            <KV label="Spiel" value={open.spiel} />
-            <KV label="Clan" value={open.clan || '—'} />
-            <KV label="Anzahl Spieler" value={open.spieler} />
-            <KV label="Datum" value={open.date} />
-            <div>
-              <span className="lg-label">Bemerkungen</span>
-              <p style={{ margin: 0 }}>{open.bemerkungen}</p>
-            </div>
-          </div>
-        )}
-      </Modal>
-    </>
-  )
-}
-
-function Stats({ stats }: { stats: { label: string; value: number; accent?: string }[] }) {
-  return (
-    <div style={{ display: 'grid', gap: '0.8rem', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', marginBottom: '1.2rem' }}>
-      {stats.map((s) => (
-        <div key={s.label} className="lg-panel" style={{ padding: '1rem' }}>
-          <div className="mono lg-muted" style={{ fontSize: '0.75rem', letterSpacing: '0.1em' }}>{s.label.toUpperCase()}</div>
-          <div style={{ fontFamily: 'var(--font-headline)', fontSize: '2rem', color: s.accent ?? 'var(--clr-text)' }}>{s.value}</div>
         </div>
       ))}
-    </div>
-  )
-}
-
-function KV({ label, value }: { label: string; value: React.ReactNode }) {
-  return (
-    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px dashed var(--clr-border)', padding: '0.4rem 0' }}>
-      <span className="lg-muted mono" style={{ fontSize: '0.8rem' }}>{label}</span>
-      <span style={{ fontWeight: 500 }}>{value}</span>
-    </div>
+    </>
   )
 }
