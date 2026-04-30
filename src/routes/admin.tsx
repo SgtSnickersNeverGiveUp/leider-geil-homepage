@@ -1,14 +1,5 @@
-import { createFileRoute } from '@tanstack/react-router'
-import { useState, useEffect } from 'react'
-import { supabase } from '@/lib/supabase'
-import type { Member, ClanRole, ClanEvent } from '@/lib/types'
-
-export const Route = createFileRoute('/admin')({
-  component: AdminPage,
-})
-
 function AdminPage() {
-  const [tab, setTab] = useState<'roster' | 'events'>('roster')
+  const [tab, setTab] = useState<'roster' | 'events' | 'news'>('roster')
 
   return (
     <div style={{ maxWidth: 1000, margin: '2rem auto', padding: '0 1.25rem' }}>
@@ -16,12 +7,74 @@ function AdminPage() {
       <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem' }}>
         <button className={`lg-btn ${tab === 'roster' ? 'lg-btn-primary' : ''}`} onClick={() => setTab('roster')}>Mitglieder</button>
         <button className={`lg-btn ${tab === 'events' ? 'lg-btn-primary' : ''}`} onClick={() => setTab('events')}>Events</button>
+        <button className={`lg-btn ${tab === 'news' ? 'lg-btn-primary' : ''}`} onClick={() => setTab('news')}>News-Ticker</button>
       </div>
 
-      {tab === 'roster' ? <RosterTab /> : <EventsTab />}
+      {tab === 'roster' && <RosterTab />}
+      {tab === 'events' && <EventsTab />}
+      {tab === 'news' && <NewsTab />}
     </div>
   )
 }
+
+function NewsTab() {
+  const [content, setContent] = useState('')
+  const [loading, setLoading] = useState(false)
+
+  // Aktuelle News beim Laden abrufen
+  useEffect(() => {
+    supabase.from('news').select('content').order('created_at', { ascending: false }).limit(1).single()
+      .then(({ data }) => { 
+        if (data) setContent(data.content) 
+      })
+  }, [])
+
+  async function saveNews() {
+    setLoading(true)
+    
+    // Wir holen zuerst den neuesten Eintrag, um zu sehen, ob wir updaten oder neu anlegen müssen
+    const { data: existing } = await supabase.from('news').select('id').limit(1).single()
+
+    let result;
+    if (existing?.id) {
+      // Update den bestehenden Eintrag
+      result = await supabase.from('news').update({ content }).eq('id', existing.id)
+    } else {
+      // Erstelle den allerersten Eintrag
+      result = await supabase.from('news').insert([{ content }])
+    }
+
+    setLoading(false)
+    if (result.error) {
+      alert('Fehler: ' + result.error.message)
+    } else {
+      alert('News-Ticker aktualisiert! ✨')
+    }
+  }
+
+  return (
+    <div className="lg-panel" style={{ padding: '1.5rem' }}>
+      <h2>News-Ticker bearbeiten</h2>
+      <p style={{ fontSize: '0.9rem', color: 'var(--clr-text-muted)', marginBottom: '1rem' }}>
+        Der Text, den du hier eingibst, erscheint in der Laufschrift auf der Startseite.
+      </p>
+      <textarea 
+        className="lg-textarea" 
+        style={{ width: '100%', minHeight: '120px', marginBottom: '1rem', fontSize: '1rem' }}
+        value={content}
+        onChange={e => setContent(e.target.value)}
+        placeholder="Schreibe hier deine News..."
+      />
+      <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+        <button className="lg-btn lg-btn-primary" onClick={saveNews} disabled={loading}>
+          {loading ? 'Speichert...' : 'News speichern'}
+        </button>
+      </div>
+    </div>
+  )
+}
+
+
 
 function RosterTab() {
   const [list, setList] = useState<Member[]>([])
