@@ -1,5 +1,5 @@
 import { Link } from '@tanstack/react-router'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import settings from '@/data/settings.json'
 import { OnlineLamp } from './OnlineLamp'
 
@@ -7,11 +7,7 @@ import { OnlineLamp } from './OnlineLamp'
  * Globaler Header inkl. Navigation.
  * - Desktop: horizontale Nav + Discord/Twitch-Buttons mit Online-Lampe.
  * - Mobile: einklappbares Menü.
- *
- * TODO (later): Aktiver Login-Status (Member/Admin) anzeigen,
- * sobald Auth (z.B. Netlify Identity) angebunden ist.
  */
-
 const navItems = [
   { to: '/', label: 'Start' },
   { to: '/roster', label: 'Roster' },
@@ -24,6 +20,22 @@ const navItems = [
 
 export function Header() {
   const [open, setOpen] = useState(false)
+
+  useEffect(() => {
+    // Netlify Identity widget callbacks: reload on login/logout to update UI
+    if (typeof window !== 'undefined' && window.netlifyIdentity) {
+      window.netlifyIdentity.on('login', () => window.location.reload())
+      window.netlifyIdentity.on('logout', () => window.location.reload())
+    }
+  }, [])
+
+  const handleLoginOpen = () => {
+    if (typeof window !== 'undefined' && window.netlifyIdentity) {
+      window.netlifyIdentity.open()
+    } else {
+      alert('Netlify Identity not loaded')
+    }
+  }
 
   return (
     <header
@@ -105,7 +117,7 @@ export function Header() {
           ))}
         </nav>
 
-        {/* Discord / Twitch */}
+        {/* Discord / Twitch + Login */}
         <div
           className="lg-social-bar"
           style={{ display: 'none', alignItems: 'center', gap: '0.6rem' }}
@@ -128,6 +140,15 @@ export function Header() {
           >
             <OnlineLamp label="Twitch online" /> Twitch
           </a>
+
+          {/* Login / Signup Button */}
+          <button
+            onClick={handleLoginOpen}
+            className="lg-btn"
+            style={{ padding: '0.45rem 0.8rem', fontSize: '0.78rem' }}
+          >
+            Login / Signup
+          </button>
         </div>
 
         {/* Mobile burger */}
@@ -201,6 +222,11 @@ export function Header() {
               >
                 <OnlineLamp /> Twitch
               </a>
+
+              {/* Mobile Login button */}
+              <button onClick={handleLoginOpen} className="lg-btn" style={{ flex: 1 }}>
+                Login / Signup
+              </button>
             </div>
           </nav>
         </div>
