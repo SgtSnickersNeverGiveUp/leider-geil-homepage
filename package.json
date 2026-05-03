@@ -3,9 +3,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-  "dev": "vite dev --port 3000",
-  "codegen": "node ./node_modules/@tanstack/router-plugin/dist/js/index.mjs codegen",
-  "build": "npm run codegen && vite build"
+    "dev": "vite dev --port 3000",
+    "build": "vite build"
 },
   "dependencies": {
     "@supabase/supabase-js": "^2.105.1",
