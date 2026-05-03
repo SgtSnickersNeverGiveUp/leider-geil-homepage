@@ -9,6 +9,7 @@ import { gameTagClass } from '@/lib/types'
 import { Modal } from '@/components/Modal'
 import { OnlineLamp } from '@/components/OnlineLamp'
 import { supabase } from '../lib/supabase';
+import type React from 'react'
 
 
 // !!! WICHTIG: Du musst deinen supabase client hier importieren !!!
