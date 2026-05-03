@@ -1,3 +1,4 @@
+import { supabase } from '../lib/supabase'
 import { createClient } from '@supabase/supabase-js'
 
 // HIER fehlte deine Projekt-ID 'smadmetqgmdukwfskjif' am Anfang!
