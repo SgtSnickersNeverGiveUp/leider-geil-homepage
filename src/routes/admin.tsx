@@ -675,19 +675,25 @@ function EventsTab() {
           setList((l) => l.map((ev) => (ev.id === editingId ? updated : ev)))
         }
         alert('Event aktualisiert.')
-      } else {
+            } else {
         // INSERT
+        console.log('INSERT-Zweig, draft =', draft, 'file =', eventImageFile)
+
         const basePayload: any = {
           title: draft.title,
           date: draft.date,
           game: draft.game,
           description: draft.description,
+          // Fallback-Bild, falls kein Upload gewählt wird:
+          image: '/placeholder.png',
         }
 
         const { data: inserted, error: insertError } = await supabase
           .from('events')
           .insert([basePayload])
           .select()
+
+        console.log('Insert result:', { inserted, insertError })
 
         if (insertError) throw insertError
         if (!inserted || !inserted[0]) {
@@ -697,13 +703,17 @@ function EventsTab() {
         let created = inserted[0] as ClanEvent
 
         if (eventImageFile && created.id) {
+          console.log('Starte uploadEventImage mit id', created.id)
           const imageUrl = await uploadEventImage(eventImageFile, String(created.id))
+          console.log('imageUrl aus uploadEventImage:', imageUrl)
 
           const { data: updatedRow, error: updateError } = await supabase
             .from('events')
             .update({ image: imageUrl })
             .eq('id', created.id)
             .select()
+
+          console.log('Update result:', { updatedRow, updateError })
 
           if (updateError) throw updateError
           if (updatedRow && updatedRow[0]) {
