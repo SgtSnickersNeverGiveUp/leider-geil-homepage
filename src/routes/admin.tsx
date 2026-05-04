@@ -351,7 +351,7 @@ function RosterTab() {
 
   return (
     <>
-      <Name="lg-panel" style={{ padding: '1.5rem' }}>
+      <div className="lg-panel" style={{ padding: '1.5rem' }}>
         <h2 style={{ marginTop: 0 }}>
           {editingId ? 'Mitglied bearbeiten' : 'Neues Mitglied hinzufügen'}
         </h2>
