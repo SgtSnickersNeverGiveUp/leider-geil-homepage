@@ -614,7 +614,61 @@ function EventsTab() {
     })
     setEditingId(null)
   }
+function EventsTab() {
+  const [list, setList] = useState<ClanEvent[]>([])
+  const [draft, setDraft] = useState<{ ... }>({ ... })
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [eventImageFile, setEventImageFile] = useState<File | null>(null)
 
+  useEffect(() => {
+    // ... Events laden ...
+  }, [])
+
+  function resetForm() {
+    // ...
+  }
+
+  // HIER rein:
+  async function uploadEventImage(file: File, eventId: string) {
+    const ext = file.name.split('.').pop() || 'jpg'
+    const filePath = `events/${eventId}.${ext}`
+
+    const { error: uploadError } = await supabase
+      .storage
+      .from('event-images')
+      .upload(filePath, file, {
+        upsert: true,
+      })
+
+    if (uploadError) {
+      throw new Error('Bild-Upload fehlgeschlagen: ' + uploadError.message)
+    }
+
+    const { data } = supabase
+      .storage
+      .from('event-images')
+      .getPublicUrl(filePath)
+
+    return data.publicUrl as string
+  }
+
+  async function addOrUpdate(e: React.FormEvent) {
+    // ... neue Version von addOrUpdate ...
+  }
+
+  async function remove(id: string) {
+    // ...
+  }
+
+  function startEdit(ev: ClanEvent) {
+    // ...
+  }
+
+  return (
+    // JSX ...
+  )
+}
   async function addOrUpdate(e: React.FormEvent) {
     e.preventDefault()
 
