@@ -567,7 +567,122 @@ function RosterTab() {
 /* ==================================================================
    Events, Videos, Banner, EventAnmeldungen... (Rest bleibt identisch)
    ================================================================== */
+async function saveEvent(options: {
+  supabase: typeof supabase
+  draft: {
+    title: string
+    date: string
+    game: string
+    description: string
+  }
+  editingId?: string | null
+  file: File | null
+}) {
+  const { supabase, draft, editingId, file } = options
 
+  // Datum robust umwandeln (für timestamptz oder text)
+  const dateValue = (() => {
+    const d = new Date(draft.date)
+    return Number.isNaN(d.getTime()) ? draft.date : d.toISOString()
+  })()
+
+  if (editingId) {
+    // UPDATE
+    const payload: any = {
+      title: draft.title,
+      date: dateValue,
+      game: draft.game,
+      description: draft.description,
+    }
+
+    const { data: updated, error } = await supabase
+      .from('events')
+      .update(payload)
+      .eq('id', editingId)
+      .select('*')
+      .maybeSingle()
+
+    if (error) throw error
+    if (!updated) throw new Error('Update: keine Zeile gefunden (editingId passt nicht?)')
+
+    // Optional Bild
+    if (file) {
+      const ext = (file.name.split('.').pop() || 'jpg').toLowerCase()
+      const filePath = `events/${editingId}.${ext}`
+
+      const { error: uploadError } = await supabase
+        .storage
+        .from('event-images')
+        .upload(filePath, file, { upsert: true })
+
+      if (uploadError) throw new Error('Bild-Upload fehlgeschlagen: ' + uploadError.message)
+
+      const { data: publicUrlData } = supabase
+        .storage
+        .from('event-images')
+        .getPublicUrl(filePath)
+
+      const { data: updated2, error: updImgError } = await supabase
+        .from('events')
+        .update({ image: publicUrlData.publicUrl })
+        .eq('id', editingId)
+        .select('*')
+        .maybeSingle()
+
+      if (updImgError) throw updImgError
+      return updated2
+    }
+
+    return updated
+  } else {
+    // INSERT
+    const basePayload: any = {
+      title: draft.title,
+      date: dateValue,
+      game: draft.game,
+      description: draft.description,
+      image: '/placeholder.png',
+    }
+
+    const { data: inserted, error } = await supabase
+      .from('events')
+      .insert(basePayload)
+      .select('*')
+      .maybeSingle()
+
+    if (error) throw error
+    if (!inserted) throw new Error('Insert: keine Zeile zurückbekommen.')
+
+    if (file) {
+      const ext = (file.name.split('.').pop() || 'jpg').toLowerCase()
+      const filePath = `events/${inserted.id}.${ext}`
+
+      const { error: uploadError } = await supabase
+        .storage
+        .from('event-images')
+        .upload(filePath, file, { upsert: true })
+
+      if (uploadError) throw new Error('Bild-Upload fehlgeschlagen: ' + uploadError.message)
+
+      const { data: publicUrlData } = supabase
+        .storage
+        .from('event-images')
+        .getPublicUrl(filePath)
+
+      const { data: updatedRow, error: updImgError } = await supabase
+        .from('events')
+        .update({ image: publicUrlData.publicUrl })
+        .eq('id', inserted.id)
+        .select('*')
+        .maybeSingle()
+
+      if (updImgError) throw updImgError
+      return updatedRow
+    }
+
+    return inserted
+  }
+}
 function EventsTab() {
   const [list, setList] = useState<ClanEvent[]>([])
   const [draft, setDraft] = useState<{
@@ -641,109 +756,34 @@ function EventsTab() {
   }
 
     async function addOrUpdate(e: React.FormEvent) {
-    e.preventDefault()
+  e.preventDefault()
 
-    try {
-      if (editingId) {
-        // UPDATE
-        let imageUrl: string | undefined
-
-        if (eventImageFile) {
-          imageUrl = await uploadEventImage(eventImageFile, editingId)
-        }
-
-        const payload: any = {
-          title: draft.title,
-          date: draft.date,
-          game: draft.game,
-          description: draft.description,
-        }
-
-        if (imageUrl) {
-          payload.image = imageUrl
-        }
-
-        const { data, error } = await supabase
-          .from('events')
-          .update(payload)
-          .eq('id', editingId)
-          .select()
-
-        if (error) throw error
-        if (data && data[0]) {
-          const updated = data[0] as ClanEvent
-          setList((l) => l.map((ev) => (ev.id === editingId ? updated : ev)))
-        }
-        alert('Event aktualisiert.')
-      } else {
-        // INSERT
-        const basePayload: any = {
-          title: draft.title,
-          date: draft.date,
-          game: draft.game,
-          description: draft.description,
-          // Fallback-Bild, falls kein Upload gewählt wird:
-          image: '/placeholder.png',
-        }
-
-        const { data: inserted, error: insertError } = await supabase
-          .from('events')
-          .insert([basePayload])
-          .select()
-
-        if (insertError) throw insertError
-        if (!inserted || !inserted[0]) {
-          throw new Error('Kein Event von Supabase zurückgegeben.')
-        }
-
-        let created = inserted[0] as ClanEvent
-
-        if (eventImageFile && created.id) {
-          const imageUrl = await uploadEventImage(eventImageFile, String(created.id))
-
-          const { data: updatedRow, error: updateError } = await supabase
-            .from('events')
-            .update({ image: imageUrl })
-            .eq('id', created.id)
-            .select()
-
-          if (updateError) throw updateError
-          if (updatedRow && updatedRow[0]) {
-            created = updatedRow[0] as ClanEvent
-          }
-        }
-
-        setList((l) => [created, ...l])
-        alert('Event gespeichert.')
-      }
-
-      resetForm()
-    } catch (err) {
-      alert('Speicherfehler: ' + (err as Error).message)
-    }
-  }
-
-  async function remove(id: string) {
-    if (!confirm('Event wirklich löschen?')) return
-    const { error } = await supabase.from('events').delete().eq('id', id)
-    if (error) {
-      alert('Fehler beim Löschen: ' + error.message)
-    } else {
-      setList((l) => l.filter((e) => e.id !== id))
-    }
-  }
-
-  function startEdit(ev: ClanEvent) {
-    setEditingId(ev.id as string)
-    setDraft({
-      title: ev.title,
-      date: ev.date,
-      game: ev.game,
-      description: ev.description || '',
+  try {
+    const saved = await saveEvent({
+      supabase,
+      draft,
+      editingId,
+      file: eventImageFile,
     })
-    setEventImageFile(null)
-    window.scrollTo({ top: 0, behavior: 'smooth' })
+
+    if (saved) {
+      setList((prev) => {
+        // Wenn editingId existiert: Liste updaten
+        if (editingId) {
+          return prev.map((ev) => (ev.id === saved.id ? (saved as ClanEvent) : ev))
+        }
+        // Sonst: Neues Event vorne einfügen
+        return [saved as ClanEvent, ...prev]
+      })
+    }
+
+    alert(editingId ? 'Event aktualisiert.' : 'Event gespeichert.')
+    resetForm()
+  } catch (err) {
+    console.error('Fehler beim Speichern:', err)
+    alert('Speicherfehler: ' + (err as Error).message)
   }
+}
 
   return (
     <>
