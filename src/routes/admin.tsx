@@ -617,7 +617,7 @@ function EventsTab() {
   }
 
   // Bild zu Supabase Storage hochladen und Public URL zurückgeben
-  async function uploadEventImage(file: File, eventId: string) {
+      async function uploadEventImage(file: File, eventId: string) {
     const ext = file.name.split('.').pop() || 'jpg'
     const filePath = `events/${eventId}.${ext}`
 
@@ -640,7 +640,7 @@ function EventsTab() {
     return data.publicUrl as string
   }
 
-  async function addOrUpdate(e: React.FormEvent) {
+    async function addOrUpdate(e: React.FormEvent) {
     e.preventDefault()
 
     try {
@@ -675,10 +675,8 @@ function EventsTab() {
           setList((l) => l.map((ev) => (ev.id === editingId ? updated : ev)))
         }
         alert('Event aktualisiert.')
-            } else {
+      } else {
         // INSERT
-        console.log('INSERT-Zweig, draft =', draft, 'file =', eventImageFile)
-
         const basePayload: any = {
           title: draft.title,
           date: draft.date,
@@ -693,8 +691,6 @@ function EventsTab() {
           .insert([basePayload])
           .select()
 
-        console.log('Insert result:', { inserted, insertError })
-
         if (insertError) throw insertError
         if (!inserted || !inserted[0]) {
           throw new Error('Kein Event von Supabase zurückgegeben.')
@@ -703,17 +699,13 @@ function EventsTab() {
         let created = inserted[0] as ClanEvent
 
         if (eventImageFile && created.id) {
-          console.log('Starte uploadEventImage mit id', created.id)
           const imageUrl = await uploadEventImage(eventImageFile, String(created.id))
-          console.log('imageUrl aus uploadEventImage:', imageUrl)
 
           const { data: updatedRow, error: updateError } = await supabase
             .from('events')
             .update({ image: imageUrl })
             .eq('id', created.id)
             .select()
-
-          console.log('Update result:', { updatedRow, updateError })
 
           if (updateError) throw updateError
           if (updatedRow && updatedRow[0]) {
