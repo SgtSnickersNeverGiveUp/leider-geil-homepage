@@ -9,13 +9,16 @@ interface Props {
 }
 
 export function MemberCard({ member, onMore, onEdit, onDelete }: Props) {
+  const games = member.games || []
+  const funTags = member.funTags || []
+
   return (
     <article
       className="lg-panel"
       style={{ padding: '1.2rem', display: 'flex', flexDirection: 'column', gap: '0.8rem' }}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.9rem' }}>
-        <img className="lg-avatar" src={member.avatar} alt={member.name} />
+        <img className="lg-avatar" src={member.avatar || '/placeholder.png'} alt={member.name} />
         <div>
           <div
             style={{
@@ -30,7 +33,10 @@ export function MemberCard({ member, onMore, onEdit, onDelete }: Props) {
           <div className="lg-muted" style={{ fontSize: '0.85rem' }}>
             {member.role}
           </div>
-          <div className="mono" style={{ fontSize: '0.7rem', marginTop: '0.2rem', color: 'var(--clr-accent-arc)' }}>
+          <div
+            className="mono"
+            style={{ fontSize: '0.7rem', marginTop: '0.2rem', color: 'var(--clr-accent-arc)' }}
+          >
             {member.clanRole}
           </div>
         </div>
@@ -39,11 +45,15 @@ export function MemberCard({ member, onMore, onEdit, onDelete }: Props) {
       <p style={{ fontSize: '0.92rem', margin: 0, lineHeight: 1.45 }}>{member.bio}</p>
 
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem' }}>
-        {member.games.map((g) => (
-          <span key={g} className={gameTagClass(g)}>{g}</span>
+        {games.map((g) => (
+          <span key={g} className={gameTagClass(g)}>
+            {g}
+          </span>
         ))}
-        {member.funTags.map((t) => (
-          <span key={t} className="lg-tag">{t}</span>
+        {funTags.map((t) => (
+          <span key={t} className="lg-tag">
+            {t}
+          </span>
         ))}
       </div>
 
