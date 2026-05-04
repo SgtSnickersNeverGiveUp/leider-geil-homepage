@@ -327,26 +327,91 @@ function BewerbungenTab() {
         </form>
       </div>
 
-      <h2 style={{ marginTop: '2rem' }}>Aktuelle Mitglieder</h2>
-      <div style={{ display: 'grid', gap: '1rem', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))' }}>
-        {list.map((m) => (
-          <div key={m.id} className="lg-panel" style={{ padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
-            <div style={{ display: 'flex', gap: '0.7rem', alignItems: 'center' }}>
-              <img className="lg-avatar" src={m.avatar} alt={m.name} style={{ width: 50, height: 50, objectFit: 'cover' }} />
-              <div>
-                <div style={{ fontFamily: 'var(--font-headline)', textTransform: 'uppercase' }}>{m.name}</div>
-                <div className="lg-muted" style={{ fontSize: '0.8rem' }}>{m.role} · {m.clan_role}</div>
-              </div>
-            </div>
-            <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
-              {(m.games || []).map((g) => <span key={g} className="lg-tag">{g}</span>)}
-            </div>
-            <div style={{ display: 'flex', gap: '0.4rem' }}>
-              <button className="lg-btn lg-btn-danger" style={{ flex: 1 }} onClick={() => remove(m.id)}>Löschen</button>
-            </div>
+     <h2 style={{ marginTop: '2rem' }}>Aktuelle Mitglieder</h2>
+<div
+  style={{
+    display: 'grid',
+    gap: '1rem',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+  }}
+>
+  {list.map((m) => (
+    <div
+      key={m.id}
+      className="lg-panel"
+      style={{
+        padding: '1rem',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '0.6rem',
+      }}
+    >
+      <div
+        style={{ display: 'flex', gap: '0.7rem', alignItems: 'center' }}
+      >
+        <img
+          className="lg-avatar"
+          src={m.avatar || '/placeholder.png'}
+          alt={m.name}
+          style={{ width: 50, height: 50, objectFit: 'cover' }}
+        />
+        <div>
+          <div
+            style={{
+              fontFamily: 'var(--font-headline)',
+              textTransform: 'uppercase',
+            }}
+          >
+            {m.name}
           </div>
+          <div
+            className="lg-muted"
+            style={{ fontSize: '0.8rem' }}
+          >
+            {m.role} · {m.clan_role}
+          </div>
+        </div>
+      </div>
+      <div
+        style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}
+      >
+        {(m.games || []).map((g) => (
+          <span key={g} className="lg-tag">
+            {g}
+          </span>
         ))}
       </div>
+      <div style={{ display: 'flex', gap: '0.4rem' }}>
+        <button
+          className="lg-btn"
+          style={{ flex: 1 }}
+          onClick={() => {
+            setEditingId(m.id)
+            setDraft({
+              name: m.name,
+              role: m.role || '',
+              clanRole: m.clan_role as ClanRole,
+              games: (m.games || []).join(', '),
+              bio: m.bio || '',
+              funTags: (m.fun_tags || []).join(', '),
+              avatarFile: null,
+            })
+            window.scrollTo({ top: 0, behavior: 'smooth' })
+          }}
+        >
+          Bearbeiten
+        </button>
+        <button
+          className="lg-btn lg-btn-danger"
+          style={{ flex: 1 }}
+          onClick={() => remove(m.id)}
+        >
+          Löschen
+        </button>
+      </div>
+    </div>
+  ))}
+</div>
     </>
   )
 }
