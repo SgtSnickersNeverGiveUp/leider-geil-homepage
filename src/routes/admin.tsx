@@ -613,23 +613,10 @@ function EventsTab() {
       description: '',
     })
     setEditingId(null)
-  }
-function EventsTab() {
-  const [list, setList] = useState<ClanEvent[]>([])
-  const [draft, setDraft] = useState<{ ... }>({ ... })
-  const [editingId, setEditingId] = useState<string | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [eventImageFile, setEventImageFile] = useState<File | null>(null)
-
-  useEffect(() => {
-    // ... Events laden ...
-  }, [])
-
-  function resetForm() {
-    // ...
+    setEventImageFile(null)
   }
 
-  // HIER rein:
+  // Bild zu Supabase Storage hochladen und Public URL zurückgeben
   async function uploadEventImage(file: File, eventId: string) {
     const ext = file.name.split('.').pop() || 'jpg'
     const filePath = `events/${eventId}.${ext}`
@@ -654,35 +641,28 @@ function EventsTab() {
   }
 
   async function addOrUpdate(e: React.FormEvent) {
-    // ... neue Version von addOrUpdate ...
-  }
-
-  async function remove(id: string) {
-    // ...
-  }
-
-  function startEdit(ev: ClanEvent) {
-    // ...
-  }
-
-  return (
-    // JSX ...
-  )
-}
-  async function addOrUpdate(e: React.FormEvent) {
     e.preventDefault()
-
-    const payload: any = {
-      title: draft.title,
-      date: draft.date,
-      game: draft.game,
-      description: draft.description,
-      image: '/placeholder.png',
-    }
 
     try {
       if (editingId) {
         // UPDATE
+        let imageUrl: string | undefined
+
+        if (eventImageFile) {
+          imageUrl = await uploadEventImage(eventImageFile, editingId)
+        }
+
+        const payload: any = {
+          title: draft.title,
+          date: draft.date,
+          game: draft.game,
+          description: draft.description,
+        }
+
+        if (imageUrl) {
+          payload.image = imageUrl
+        }
+
         const { data, error } = await supabase
           .from('events')
           .update(payload)
@@ -697,16 +677,41 @@ function EventsTab() {
         alert('Event aktualisiert.')
       } else {
         // INSERT
-        const { data, error } = await supabase
+        const basePayload: any = {
+          title: draft.title,
+          date: draft.date,
+          game: draft.game,
+          description: draft.description,
+        }
+
+        const { data: inserted, error: insertError } = await supabase
           .from('events')
-          .insert([payload])
+          .insert([basePayload])
           .select()
 
-        if (error) throw error
-        if (data && data[0]) {
-          const created = data[0] as ClanEvent
-          setList((l) => [created, ...l])
+        if (insertError) throw insertError
+        if (!inserted || !inserted[0]) {
+          throw new Error('Kein Event von Supabase zurückgegeben.')
         }
+
+        let created = inserted[0] as ClanEvent
+
+        if (eventImageFile && created.id) {
+          const imageUrl = await uploadEventImage(eventImageFile, String(created.id))
+
+          const { data: updatedRow, error: updateError } = await supabase
+            .from('events')
+            .update({ image: imageUrl })
+            .eq('id', created.id)
+            .select()
+
+          if (updateError) throw updateError
+          if (updatedRow && updatedRow[0]) {
+            created = updatedRow[0] as ClanEvent
+          }
+        }
+
+        setList((l) => [created, ...l])
         alert('Event gespeichert.')
       }
 
@@ -730,11 +735,11 @@ function EventsTab() {
     setEditingId(ev.id as string)
     setDraft({
       title: ev.title,
-      // falls du ISO-Strings speicherst, kannst du sie direkt ins datetime-local geben
       date: ev.date,
       game: ev.game,
       description: ev.description || '',
     })
+    setEventImageFile(null)
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
@@ -794,17 +799,17 @@ function EventsTab() {
             />
           </label>
           <label style={{ gridColumn: '1 / -1' }}>
-  <span className="lg-label">Event-Bild (Upload zu Supabase Storage)</span>
-  <input
-    className="lg-input"
-    type="file"
-    accept="image/*"
-    onChange={(e) => {
-      const file = e.target.files?.[0] || null
-      setEventImageFile(file)
-    }}
-  />
-</label>
+            <span className="lg-label">Event-Bild (Upload zu Supabase Storage)</span>
+            <input
+              className="lg-input"
+              type="file"
+              accept="image/*"
+              onChange={(e) => {
+                const file = e.target.files?.[0] || null
+                setEventImageFile(file)
+              }}
+            />
+          </label>
           <div
             style={{
               gridColumn: '1 / -1',
