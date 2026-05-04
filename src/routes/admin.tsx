@@ -222,7 +222,7 @@ function BewerbungenTab() {
    Roster
    ================================================================== */
 
-  function RosterTab() {
+function RosterTab() {
   const [list, setList] = useState<Member[]>([])
   const [draft, setDraft] = useState({
     name: '',
@@ -233,189 +233,335 @@ function BewerbungenTab() {
     funTags: '',
     avatarFile: null as File | null,
   })
+  const [editingId, setEditingId] = useState<string | null>(null)
 
   useEffect(() => {
     const loadMembers = async () => {
       const { data, error } = await supabase
         .from('members')
         .select('*')
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
 
       if (error) {
-        console.error('Fehler beim Laden:', error.message);
+        console.error('Fehler beim Laden:', error.message)
       } else {
-        setList(data || []);
+        setList((data || []) as Member[])
       }
-    };
-    loadMembers();
-  }, []);
+    }
+    loadMembers()
+  }, [])
 
-    async function add(e: React.FormEvent) {
-    e.preventDefault();
-    let avatarUrl = '/placeholder.png';
+  async function saveMember(e: React.FormEvent) {
+    e.preventDefault()
+    let avatarUrl = '/placeholder.png'
 
     if (draft.avatarFile) {
       try {
-        const file = draft.avatarFile;
-        const fileName = `img-${Date.now()}.jpg`;
+        const file = draft.avatarFile
+        const fileName = `img-${Date.now()}.jpg`
         const { error: upError } = await supabase.storage
           .from('member-images')
-          .upload(fileName, file);
+          .upload(fileName, file)
 
-        if (upError) throw upError;
-        const { data: urlData } = supabase.storage.from('member-images').getPublicUrl(fileName);
-        avatarUrl = urlData.publicUrl;
+        if (upError) throw upError
+        const { data: urlData } = supabase.storage
+          .from('member-images')
+          .getPublicUrl(fileName)
+        avatarUrl = urlData.publicUrl
       } catch (err) {
-        alert('Upload-Fehler: ' + (err as Error).message);
-        return;
+        alert('Upload-Fehler: ' + (err as Error).message)
+        return
       }
     }
 
-    try {
-      const { data: newData, error: saveError } = await supabase
-        .from('members')
-        .insert([{
-          name: draft.name,
-          role: draft.role,
-          clan_role: draft.clanRole,
-          avatar: avatarUrl,
-          bio: draft.bio,
-          games: draft.games ? draft.games.split(',').map(s => s.trim()).filter(Boolean) : [],
-          fun_tags: draft.funTags ? draft.funTags.split(',').map(s => s.trim()).filter(Boolean) : []
-        }])
-        .select();
+    const payload: any = {
+      name: draft.name,
+      role: draft.role,
+      clan_role: draft.clanRole,
+      bio: draft.bio,
+      games: draft.games
+        ? draft.games.split(',').map((s) => s.trim()).filter(Boolean)
+        : [],
+      fun_tags: draft.funTags
+        ? draft.funTags.split(',').map((s) => s.trim()).filter(Boolean)
+        : [],
+    }
 
-      if (saveError) throw saveError;
-      alert('Erfolg! Mitglied gespeichert.');
-      window.location.reload(); 
+    if (draft.avatarFile) {
+      payload.avatar = avatarUrl
+    }
+
+    try {
+      if (editingId) {
+        // UPDATE
+        const { data, error } = await supabase
+          .from('members')
+          .update(payload)
+          .eq('id', editingId)
+          .select()
+
+        if (error) throw error
+
+        if (data && data[0]) {
+          setList((l) =>
+            l.map((m) => (m.id === editingId ? (data[0] as Member) : m)),
+          )
+        }
+        alert('Mitglied aktualisiert.')
+      } else {
+        // INSERT
+        const { data: newData, error: saveError } = await supabase
+          .from('members')
+          .insert([
+            {
+              ...payload,
+              avatar: payload.avatar ?? avatarUrl,
+            },
+          ])
+          .select()
+
+        if (saveError) throw saveError
+        if (newData && newData[0]) {
+          setList((l) => [newData[0] as Member, ...l])
+        }
+        alert('Erfolg! Mitglied gespeichert.')
+      }
+
+      setDraft({
+        name: '',
+        role: '',
+        clanRole: 'Recruit' as ClanRole,
+        games: '',
+        bio: '',
+        funTags: '',
+        avatarFile: null,
+      })
+      setEditingId(null)
     } catch (err) {
-      alert('Speicher-Fehler: ' + (err as Error).message);
+      alert('Speicher-Fehler: ' + (err as Error).message)
     }
   }
 
-
   async function remove(id: string) {
-    if (!confirm('Mitglied wirklich löschen?')) return;
-    const { error } = await supabase.from('members').delete().eq('id', id);
-    if (error) alert('Fehler: ' + error.message);
-    else setList(l => l.filter(m => m.id !== id));
+    if (!confirm('Mitglied wirklich löschen?')) return
+    const { error } = await supabase.from('members').delete().eq('id', id)
+    if (error) alert('Fehler: ' + error.message)
+    else setList((l) => l.filter((m) => m.id !== id))
   }
 
   return (
     <>
-      <div className="lg-panel" style={{ padding: '1.5rem' }}>
-        <h2 style={{ marginTop: 0 }}>Neues Mitglied hinzufügen</h2>
-        <form onSubmit={add} style={{ display: 'grid', gap: '0.8rem', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
-          <label><span className="lg-label">Name</span><input className="lg-input" required value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} /></label>
-          <label><span className="lg-label">Rolle / Position</span><input className="lg-input" value={draft.role} onChange={(e) => setDraft({ ...draft, role: e.target.value })} /></label>
+      <Name="lg-panel" style={{ padding: '1.5rem' }}>
+        <h2 style={{ marginTop: 0 }}>
+          {editingId ? 'Mitglied bearbeiten' : 'Neues Mitglied hinzufügen'}
+        </h2>
+        <form
+          onSubmit={saveMember}
+          style={{
+            display: 'grid',
+            gap: '0.8rem',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+          }}
+        >
+          <label>
+            <span className="lg-label">Name</span>
+            <input
+              className="lg-input"
+              required
+              value={draft.name}
+              onChange={(e) => setDraft({ ...draft, name: e.target.value })}
+            />
+          </label>
+          <label>
+            <span className="lg-label">Rolle / Position</span>
+            <input
+              className="lg-input"
+              value={draft.role}
+              onChange={(e) => setDraft({ ...draft, role: e.target.value })}
+            />
+          </label>
           <label>
             <span className="lg-label">Clan-Rang</span>
-            <select className="lg-select" value={draft.clanRole} onChange={(e) => setDraft({ ...draft, clanRole: e.target.value as ClanRole })}>
-              {(['Leader', 'Co-Leader', 'Officer', 'Member', 'Recruit'] as ClanRole[]).map((r) => <option key={r}>{r}</option>)}
+            <select
+              className="lg-select"
+              value={draft.clanRole}
+              onChange={(e) =>
+                setDraft({
+                  ...draft,
+                  clanRole: e.target.value as ClanRole,
+                })
+              }
+            >
+              {(
+                ['Leader', 'Co-Leader', 'Officer', 'Member', 'Recruit'] as ClanRole[]
+              ).map((r) => (
+                <option key={r}>{r}</option>
+              ))}
             </select>
           </label>
-          <label><span className="lg-label">Spiele (Komma-getrennt)</span><input className="lg-input" placeholder="PUBG, ARC Raiders" value={draft.games} onChange={(e) => setDraft({ ...draft, games: e.target.value })} /></label>
-          <label style={{ gridColumn: '1 / -1' }}><span className="lg-label">Bio</span><textarea className="lg-textarea" value={draft.bio} onChange={(e) => setDraft({ ...draft, bio: e.target.value })} /></label>
-          <label style={{ gridColumn: '1 / -1' }}><span className="lg-label">Fun-Tags (Komma-getrennt)</span><input className="lg-input" placeholder="Sniper, Strategist" value={draft.funTags} onChange={(e) => setDraft({ ...draft, funTags: e.target.value })} /></label>
+          <label>
+            <span className="lg-label">Spiele (Komma-getrennt)</span>
+            <input
+              className="lg-input"
+              placeholder="PUBG, ARC Raiders"
+              value={draft.games}
+              onChange={(e) => setDraft({ ...draft, games: e.target.value })}
+            />
+          </label>
+          <label style={{ gridColumn: '1 / -1' }}>
+            <span className="lg-label">Bio</span>
+            <textarea
+              className="lg-textarea"
+              value={draft.bio}
+              onChange={(e) => setDraft({ ...draft, bio: e.target.value })}
+            />
+          </label>
+          <label style={{ gridColumn: '1 / -1' }}>
+            <span className="lg-label">Fun-Tags (Komma-getrennt)</span>
+            <input
+              className="lg-input"
+              placeholder="Sniper, Strategist"
+              value={draft.funTags}
+              onChange={(e) => setDraft({ ...draft, funTags: e.target.value })}
+            />
+          </label>
           <label style={{ gridColumn: '1 / -1' }}>
             <span className="lg-label">Avatar (Upload)</span>
-            <input className="lg-input" type="file" accept="image/*" onChange={(e) => setDraft({ ...draft, avatarFile: e.target.files?.[0] || null })} />
+            <input
+              className="lg-input"
+              type="file"
+              accept="image/*"
+              onChange={(e) =>
+                setDraft({
+                  ...draft,
+                  avatarFile: e.target.files?.[0] || null,
+                })
+              }
+            />
           </label>
-          <div style={{ gridColumn: '1 / -1', display: 'flex', justifyContent: 'flex-end' }}>
-            <button className="lg-btn lg-btn-primary" type="submit">Speichern</button>
+          <div
+            style={{
+              gridColumn: '1 / -1',
+              display: 'flex',
+              justifyContent: 'space-between',
+              gap: '0.5rem',
+            }}
+          >
+            {editingId && (
+              <button
+                type="button"
+                className="lg-btn"
+                onClick={() => {
+                  setEditingId(null)
+                  setDraft({
+                    name: '',
+                    role: '',
+                    clanRole: 'Recruit' as ClanRole,
+                    games: '',
+                    bio: '',
+                    funTags: '',
+                    avatarFile: null,
+                  })
+                }}
+              >
+                Abbrechen
+              </button>
+            )}
+            <button className="lg-btn lg-btn-primary" type="submit">
+              {editingId ? 'Aktualisieren' : 'Speichern'}
+            </button>
           </div>
         </form>
       </div>
 
-     <h2 style={{ marginTop: '2rem' }}>Aktuelle Mitglieder</h2>
-<div
-  style={{
-    display: 'grid',
-    gap: '1rem',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
-  }}
->
-  {list.map((m) => (
-    <div
-      key={m.id}
-      className="lg-panel"
-      style={{
-        padding: '1rem',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '0.6rem',
-      }}
-    >
+      <h2 style={{ marginTop: '2rem' }}>Aktuelle Mitglieder</h2>
       <div
-        style={{ display: 'flex', gap: '0.7rem', alignItems: 'center' }}
+        style={{
+          display: 'grid',
+          gap: '1rem',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+        }}
       >
-        <img
-          className="lg-avatar"
-          src={m.avatar || '/placeholder.png'}
-          alt={m.name}
-          style={{ width: 50, height: 50, objectFit: 'cover' }}
-        />
-        <div>
+        {list.map((m) => (
           <div
+            key={m.id}
+            className="lg-panel"
             style={{
-              fontFamily: 'var(--font-headline)',
-              textTransform: 'uppercase',
+              padding: '1rem',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '0.6rem',
             }}
           >
-            {m.name}
+            <div
+              style={{ display: 'flex', gap: '0.7rem', alignItems: 'center' }}
+            >
+              <img
+                className="lg-avatar"
+                src={m.avatar || '/placeholder.png'}
+                alt={m.name}
+                style={{ width: 50, height: 50, objectFit: 'cover' }}
+              />
+              <div>
+                <div
+                  style={{
+                    fontFamily: 'var(--font-headline)',
+                    textTransform: 'uppercase',
+                  }}
+                >
+                  {m.name}
+                </div>
+                <div
+                  className="lg-muted"
+                  style={{ fontSize: '0.8rem' }}
+                >
+                  {m.role} · {m.clan_role}
+                </div>
+              </div>
+            </div>
+            <div
+              style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}
+            >
+              {(m.games || []).map((g) => (
+                <span key={g} className="lg-tag">
+                  {g}
+                </span>
+              ))}
+            </div>
+            <div style={{ display: 'flex', gap: '0.4rem' }}>
+              <button
+                className="lg-btn"
+                style={{ flex: 1 }}
+                onClick={() => {
+                  setEditingId(m.id)
+                  setDraft({
+                    name: m.name,
+                    role: m.role || '',
+                    clanRole: m.clan_role as ClanRole,
+                    games: (m.games || []).join(', '),
+                    bio: m.bio || '',
+                    funTags: (m.fun_tags || []).join(', '),
+                    avatarFile: null,
+                  })
+                  window.scrollTo({ top: 0, behavior: 'smooth' })
+                }}
+              >
+                Bearbeiten
+              </button>
+              <button
+                className="lg-btn lg-btn-danger"
+                style={{ flex: 1 }}
+                onClick={() => remove(m.id)}
+              >
+                Löschen
+              </button>
+            </div>
           </div>
-          <div
-            className="lg-muted"
-            style={{ fontSize: '0.8rem' }}
-          >
-            {m.role} · {m.clan_role}
-          </div>
-        </div>
-      </div>
-      <div
-        style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}
-      >
-        {(m.games || []).map((g) => (
-          <span key={g} className="lg-tag">
-            {g}
-          </span>
         ))}
       </div>
-      <div style={{ display: 'flex', gap: '0.4rem' }}>
-        <button
-          className="lg-btn"
-          style={{ flex: 1 }}
-          onClick={() => {
-            setEditingId(m.id)
-            setDraft({
-              name: m.name,
-              role: m.role || '',
-              clanRole: m.clan_role as ClanRole,
-              games: (m.games || []).join(', '),
-              bio: m.bio || '',
-              funTags: (m.fun_tags || []).join(', '),
-              avatarFile: null,
-            })
-            window.scrollTo({ top: 0, behavior: 'smooth' })
-          }}
-        >
-          Bearbeiten
-        </button>
-        <button
-          className="lg-btn lg-btn-danger"
-          style={{ flex: 1 }}
-          onClick={() => remove(m.id)}
-        >
-          Löschen
-        </button>
-      </div>
-    </div>
-  ))}
-</div>
     </>
   )
 }
-
 
 
 /* ==================================================================
