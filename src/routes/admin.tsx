@@ -583,6 +583,7 @@ function EventsTab() {
   })
   const [editingId, setEditingId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+  const [eventImageFile, setEventImageFile] = useState<File | null>(null)
 
   // Events von Supabase laden
   useEffect(() => {
@@ -739,11 +740,17 @@ function EventsTab() {
             />
           </label>
           <label style={{ gridColumn: '1 / -1' }}>
-            <span className="lg-label">
-              Event-Bild (Upload – später Netlify Blobs / Cloudinary)
-            </span>
-            <input className="lg-input" type="file" disabled />
-          </label>
+  <span className="lg-label">Event-Bild (Upload zu Supabase Storage)</span>
+  <input
+    className="lg-input"
+    type="file"
+    accept="image/*"
+    onChange={(e) => {
+      const file = e.target.files?.[0] || null
+      setEventImageFile(file)
+    }}
+  />
+</label>
           <div
             style={{
               gridColumn: '1 / -1',
