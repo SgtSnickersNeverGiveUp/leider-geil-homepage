@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, createFileRoute } from '@tanstack/react-router'
 import settings from '@/data/settings.json'
-import members from '@/data/members.json'
 import events from '@/data/events.json'
 import videos from '@/data/videos.json'
 import type { ClanEvent, Member, VideoItem } from '@/lib/types'
@@ -9,18 +8,49 @@ import { OnlineLamp } from '@/components/OnlineLamp'
 import { MemberCard } from '@/components/MemberCard'
 import { EventCard } from '@/components/EventCard'
 import { VideoCard } from '@/components/VideoCard'
+import { supabase } from '@/lib/supabase'
 
 export const Route = createFileRoute('/')({
   component: HomePage,
 })
 
 function HomePage() {
-  const featuredMembers = (members as Member[]).slice(0, 3)
+  const [featuredMembers, setFeaturedMembers] = useState<Member[]>([])
+  const [loadingMembers, setLoadingMembers] = useState(true)
+
   const upcomingEvents = (events as ClanEvent[])
     .slice()
     .sort((a, b) => a.date.localeCompare(b.date))
     .slice(0, 2)
+
   const featuredVideos = (videos as VideoItem[]).slice(0, 2)
+
+  useEffect(() => {
+    const loadMembers = async () => {
+      setLoadingMembers(true)
+      const { data, error } = await supabase
+        .from('members')
+        .select('*')
+        .order('created_at', { ascending: false })
+
+      if (error) {
+        console.error('Fehler beim Laden der Members:', error.message)
+        setFeaturedMembers([])
+      } else {
+        setFeaturedMembers((data || []) as Member[])
+      }
+      setLoadingMembers(false)
+    }
+
+    loadMembers()
+  }, [])
+
+  // Wenn du ALLE Member im Slider willst:
+  const sliderMembers = featuredMembers
+  // Wenn du nur bestimmte Rollen willst, nimm stattdessen z.B.:
+  // const sliderMembers = featuredMembers.filter((m) =>
+  //   ['Leader', 'Co-Leader', 'Officer'].includes(m.clan_role as string),
+  // )
 
   return (
     <div style={{ maxWidth: 1280, margin: '0 auto', padding: '1.5rem 1.25rem 0' }}>
@@ -95,15 +125,21 @@ function HomePage() {
           gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
         }}
       >
-        {/* Roster Teaser als Slideshow */}
+        {/* Roster Teaser als Slideshow (Supabase) */}
         <div className="lg-panel" style={{ padding: '1.4rem' }}>
           <SectionHead
             label="// ROSTER"
             title="Unsere Squad"
             link={{ to: '/roster', label: 'Komplettes Roster' }}
           />
-          {featuredMembers.length > 0 && (
-            <RosterTeaserCarousel members={featuredMembers} />
+          {loadingMembers && <div className="lg-muted mono" style={{ fontSize: '0.8rem' }}>Lade Mitglieder…</div>}
+          {!loadingMembers && sliderMembers.length > 0 && (
+            <RosterTeaserCarousel members={sliderMembers} />
+          )}
+          {!loadingMembers && sliderMembers.length === 0 && (
+            <div className="lg-muted mono" style={{ fontSize: '0.8rem' }}>
+              Noch keine Mitglieder eingetragen.
+            </div>
           )}
         </div>
 
@@ -151,11 +187,11 @@ function HomePage() {
         </div>
       </section>
 
-      {/* Larger feature blocks */}
+      {/* Larger feature blocks – hier auch Supabase-Members */}
       <section style={{ marginTop: '2.5rem' }}>
         <SectionHead label="// SQUAD" title="Featured Members" />
         <div style={{ display: 'grid', gap: '1rem', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))' }}>
-          {featuredMembers.map((m) => (
+          {sliderMembers.map((m) => (
             <MemberCard key={m.id} member={m} />
           ))}
         </div>
@@ -228,6 +264,8 @@ function RosterTeaserCarousel({ members }: RosterTeaserCarouselProps) {
     }, 4000)
     return () => clearInterval(id)
   }, [members.length])
+
+  if (members.length === 0) return null
 
   const current = members[index]
 
