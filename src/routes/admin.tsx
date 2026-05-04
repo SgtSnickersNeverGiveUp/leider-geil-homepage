@@ -224,6 +224,7 @@ function BewerbungenTab() {
 
 function RosterTab() {
   const [list, setList] = useState<Member[]>([])
+  // ...
   const [draft, setDraft] = useState({
     name: '',
     role: '',
