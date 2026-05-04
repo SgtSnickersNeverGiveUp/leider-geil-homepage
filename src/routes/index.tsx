@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, createFileRoute } from '@tanstack/react-router'
 import settings from '@/data/settings.json'
-import events from '@/data/events.json'
 import videos from '@/data/videos.json'
 import type { ClanEvent, Member, VideoItem } from '@/lib/types'
 import { OnlineLamp } from '@/components/OnlineLamp'
@@ -18,39 +17,53 @@ function HomePage() {
   const [featuredMembers, setFeaturedMembers] = useState<Member[]>([])
   const [loadingMembers, setLoadingMembers] = useState(true)
 
-  const upcomingEvents = (events as ClanEvent[])
-    .slice()
-    .sort((a, b) => a.date.localeCompare(b.date))
-    .slice(0, 2)
+  const [eventsList, setEventsList] = useState<ClanEvent[]>([])
+  const [loadingEvents, setLoadingEvents] = useState(true)
 
   const featuredVideos = (videos as VideoItem[]).slice(0, 2)
 
   useEffect(() => {
-    const loadMembers = async () => {
+    const load = async () => {
+      // Members laden
       setLoadingMembers(true)
-      const { data, error } = await supabase
+      const { data: membersData, error: membersError } = await supabase
         .from('members')
         .select('*')
         .order('created_at', { ascending: false })
 
-      if (error) {
-        console.error('Fehler beim Laden der Members:', error.message)
+      if (membersError) {
+        console.error('Fehler beim Laden der Members:', membersError.message)
         setFeaturedMembers([])
       } else {
-        setFeaturedMembers((data || []) as Member[])
+        setFeaturedMembers((membersData || []) as Member[])
       }
       setLoadingMembers(false)
+
+      // Events laden
+      setLoadingEvents(true)
+      const { data: eventsData, error: eventsError } = await supabase
+        .from('events')
+        .select('*')
+        .order('date', { ascending: true })
+
+      if (eventsError) {
+        console.error('Fehler beim Laden der Events:', eventsError.message)
+        setEventsList([])
+      } else {
+        setEventsList((eventsData || []) as ClanEvent[])
+      }
+      setLoadingEvents(false)
     }
 
-    loadMembers()
+    load()
   }, [])
 
-  // Wenn du ALLE Member im Slider willst:
   const sliderMembers = featuredMembers
-  // Wenn du nur bestimmte Rollen willst, nimm stattdessen z.B.:
-  // const sliderMembers = featuredMembers.filter((m) =>
-  //   ['Leader', 'Co-Leader', 'Officer'].includes(m.clan_role as string),
-  // )
+
+  const upcomingEvents = eventsList
+    .slice()
+    .sort((a, b) => a.date.localeCompare(b.date))
+    .slice(0, 2)
 
   return (
     <div style={{ maxWidth: 1280, margin: '0 auto', padding: '1.5rem 1.25rem 0' }}>
@@ -132,7 +145,11 @@ function HomePage() {
             title="Unsere Squad"
             link={{ to: '/roster', label: 'Komplettes Roster' }}
           />
-          {loadingMembers && <div className="lg-muted mono" style={{ fontSize: '0.8rem' }}>Lade Mitglieder…</div>}
+          {loadingMembers && (
+            <div className="lg-muted mono" style={{ fontSize: '0.8rem' }}>
+              Lade Mitglieder…
+            </div>
+          )}
           {!loadingMembers && sliderMembers.length > 0 && (
             <RosterTeaserCarousel members={sliderMembers} />
           )}
@@ -146,16 +163,36 @@ function HomePage() {
         {/* Events Teaser */}
         <div className="lg-panel" style={{ padding: '1.4rem' }}>
           <SectionHead label="// EVENTS" title="Kommende Events" link={{ to: '/events', label: 'Alle Events' }} />
-          <div style={{ display: 'grid', gap: '0.7rem' }}>
-            {upcomingEvents.map((e) => (
-              <div key={e.id} style={{ borderLeft: '3px solid var(--clr-accent-arc)', paddingLeft: '0.7rem' }}>
-                <div style={{ fontWeight: 600 }}>{e.title}</div>
-                <div className="mono lg-muted" style={{ fontSize: '0.78rem' }}>
-                  {new Date(e.date).toLocaleDateString('de-DE', { day: '2-digit', month: 'short', year: 'numeric' })} · {e.game}
+          {loadingEvents && (
+            <div className="lg-muted mono" style={{ fontSize: '0.8rem' }}>
+              Lade Events…
+            </div>
+          )}
+          {!loadingEvents && (
+            <div style={{ display: 'grid', gap: '0.7rem' }}>
+              {upcomingEvents.map((e) => (
+                <div
+                  key={e.id}
+                  style={{ borderLeft: '3px solid var(--clr-accent-arc)', paddingLeft: '0.7rem' }}
+                >
+                  <div style={{ fontWeight: 600 }}>{e.title}</div>
+                  <div className="mono lg-muted" style={{ fontSize: '0.78rem' }}>
+                    {new Date(e.date).toLocaleDateString('de-DE', {
+                      day: '2-digit',
+                      month: 'short',
+                      year: 'numeric',
+                    })}{' '}
+                    · {e.game}
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+              {upcomingEvents.length === 0 && (
+                <div className="lg-muted mono" style={{ fontSize: '0.8rem' }}>
+                  Noch keine Events geplant.
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Videos Teaser */}
@@ -173,7 +210,13 @@ function HomePage() {
                 <img
                   src={v.thumbnail}
                   alt=""
-                  style={{ width: 70, height: 44, objectFit: 'cover', borderRadius: 6, border: '1px solid var(--clr-border)' }}
+                  style={{
+                    width: 70,
+                    height: 44,
+                    objectFit: 'cover',
+                    borderRadius: 6,
+                    border: '1px solid var(--clr-border)',
+                  }}
                 />
                 <div>
                   <div style={{ fontSize: '0.92rem', fontWeight: 500 }}>{v.title}</div>
@@ -190,7 +233,13 @@ function HomePage() {
       {/* Larger feature blocks – hier auch Supabase-Members */}
       <section style={{ marginTop: '2.5rem' }}>
         <SectionHead label="// SQUAD" title="Featured Members" />
-        <div style={{ display: 'grid', gap: '1rem', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))' }}>
+        <div
+          style={{
+            display: 'grid',
+            gap: '1rem',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+          }}
+        >
           {sliderMembers.map((m) => (
             <MemberCard key={m.id} member={m} />
           ))}
@@ -199,7 +248,13 @@ function HomePage() {
 
       <section style={{ marginTop: '2.5rem' }}>
         <SectionHead label="// EVENTS" title="Demnächst" />
-        <div style={{ display: 'grid', gap: '1rem', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))' }}>
+        <div
+          style={{
+            display: 'grid',
+            gap: '1rem',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+          }}
+        >
           {upcomingEvents.map((e) => (
             <EventCard key={e.id} event={e} showSignup />
           ))}
@@ -208,8 +263,14 @@ function HomePage() {
 
       <section style={{ marginTop: '2.5rem' }}>
         <SectionHead label="// VIDEOS" title="Galerie" />
-        <div style={{ display: 'grid', gap: '1rem', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))' }}>
-          {featuredVideos.map((v) => (
+        <div
+          style={{
+            display: 'grid',
+            gap: '1rem',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+          }}
+        >
+          {(videos as VideoItem[]).slice(0, 4).map((v) => (
             <VideoCard key={v.id} video={v} />
           ))}
         </div>
