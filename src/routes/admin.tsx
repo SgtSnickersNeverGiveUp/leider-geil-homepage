@@ -569,63 +569,248 @@ function RosterTab() {
    ================================================================== */
 
 function EventsTab() {
-  const [list, setList] = useState<ClanEvent[]>(events as ClanEvent[])
-  const [draft, setDraft] = useState({ title: '', date: '', game: 'PUBG', description: '' })
+  const [list, setList] = useState<ClanEvent[]>([])
+  const [draft, setDraft] = useState<{
+    title: string
+    date: string
+    game: string
+    description: string
+  }>({
+    title: '',
+    date: '',
+    game: 'PUBG',
+    description: '',
+  })
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [loading, setLoading] = useState(true)
 
-  function add(e: React.FormEvent) {
-    e.preventDefault()
-    setList((l) => [
-      { id: 'tmp-' + Date.now(), title: draft.title, date: draft.date, game: draft.game, description: draft.description, image: '/placeholder.png' },
-      ...l,
-    ])
-    setDraft({ title: '', date: '', game: 'PUBG', description: '' })
+  // Events von Supabase laden
+  useEffect(() => {
+    const load = async () => {
+      setLoading(true)
+      const { data, error } = await supabase
+        .from('events')
+        .select('*')
+        .order('date', { ascending: true })
+
+      if (error) {
+        console.error('Fehler beim Laden der Events:', error.message)
+        setList([])
+      } else {
+        setList((data || []) as ClanEvent[])
+      }
+      setLoading(false)
+    }
+    load()
+  }, [])
+
+  function resetForm() {
+    setDraft({
+      title: '',
+      date: '',
+      game: 'PUBG',
+      description: '',
+    })
+    setEditingId(null)
   }
 
-  function remove(id: string) {
-    setList((l) => l.filter((e) => e.id !== id))
+  async function addOrUpdate(e: React.FormEvent) {
+    e.preventDefault()
+
+    const payload: any = {
+      title: draft.title,
+      date: draft.date,
+      game: draft.game,
+      description: draft.description,
+      image: '/placeholder.png',
+    }
+
+    try {
+      if (editingId) {
+        // UPDATE
+        const { data, error } = await supabase
+          .from('events')
+          .update(payload)
+          .eq('id', editingId)
+          .select()
+
+        if (error) throw error
+        if (data && data[0]) {
+          const updated = data[0] as ClanEvent
+          setList((l) => l.map((ev) => (ev.id === editingId ? updated : ev)))
+        }
+        alert('Event aktualisiert.')
+      } else {
+        // INSERT
+        const { data, error } = await supabase
+          .from('events')
+          .insert([payload])
+          .select()
+
+        if (error) throw error
+        if (data && data[0]) {
+          const created = data[0] as ClanEvent
+          setList((l) => [created, ...l])
+        }
+        alert('Event gespeichert.')
+      }
+
+      resetForm()
+    } catch (err) {
+      alert('Speicherfehler: ' + (err as Error).message)
+    }
+  }
+
+  async function remove(id: string) {
+    if (!confirm('Event wirklich löschen?')) return
+    const { error } = await supabase.from('events').delete().eq('id', id)
+    if (error) {
+      alert('Fehler beim Löschen: ' + error.message)
+    } else {
+      setList((l) => l.filter((e) => e.id !== id))
+    }
+  }
+
+  function startEdit(ev: ClanEvent) {
+    setEditingId(ev.id as string)
+    setDraft({
+      title: ev.title,
+      // falls du ISO-Strings speicherst, kannst du sie direkt ins datetime-local geben
+      date: ev.date,
+      game: ev.game,
+      description: ev.description || '',
+    })
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   return (
     <>
       <div className="lg-panel" style={{ padding: '1.5rem' }}>
-        <h2 style={{ marginTop: 0 }}>Neues Event</h2>
-        <form onSubmit={add} style={{ display: 'grid', gap: '0.8rem', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
-          <label><span className="lg-label">Titel</span><input className="lg-input" required value={draft.title} onChange={(e) => setDraft({ ...draft, title: e.target.value })} /></label>
-          <label><span className="lg-label">Datum</span><input className="lg-input" type="datetime-local" required value={draft.date} onChange={(e) => setDraft({ ...draft, date: e.target.value })} /></label>
+        <h2 style={{ marginTop: 0 }}>
+          {editingId ? 'Event bearbeiten' : 'Neues Event'}
+        </h2>
+        <form
+          onSubmit={addOrUpdate}
+          style={{
+            display: 'grid',
+            gap: '0.8rem',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+          }}
+        >
+          <label>
+            <span className="lg-label">Titel</span>
+            <input
+              className="lg-input"
+              required
+              value={draft.title}
+              onChange={(e) => setDraft({ ...draft, title: e.target.value })}
+            />
+          </label>
+          <label>
+            <span className="lg-label">Datum</span>
+            <input
+              className="lg-input"
+              type="datetime-local"
+              required
+              value={draft.date}
+              onChange={(e) => setDraft({ ...draft, date: e.target.value })}
+            />
+          </label>
           <label>
             <span className="lg-label">Spiel</span>
-            <select className="lg-select" value={draft.game} onChange={(e) => setDraft({ ...draft, game: e.target.value })}>
+            <select
+              className="lg-select"
+              value={draft.game}
+              onChange={(e) => setDraft({ ...draft, game: e.target.value })}
+            >
               <option>PUBG</option>
               <option>ARC Raiders</option>
               <option>Mixed</option>
             </select>
           </label>
-          <label style={{ gridColumn: '1 / -1' }}><span className="lg-label">Beschreibung</span><textarea className="lg-textarea" value={draft.description} onChange={(e) => setDraft({ ...draft, description: e.target.value })} /></label>
           <label style={{ gridColumn: '1 / -1' }}>
-            <span className="lg-label">Event-Bild (Upload – später Netlify Blobs / Cloudinary)</span>
-            <input className="lg-input" type="file" />
+            <span className="lg-label">Beschreibung</span>
+            <textarea
+              className="lg-textarea"
+              value={draft.description}
+              onChange={(e) =>
+                setDraft({ ...draft, description: e.target.value })
+              }
+            />
           </label>
-          <div style={{ gridColumn: '1 / -1', display: 'flex', justifyContent: 'flex-end' }}>
-            <button className="lg-btn lg-btn-primary" type="submit">Event speichern</button>
+          <label style={{ gridColumn: '1 / -1' }}>
+            <span className="lg-label">
+              Event-Bild (Upload – später Netlify Blobs / Cloudinary)
+            </span>
+            <input className="lg-input" type="file" disabled />
+          </label>
+          <div
+            style={{
+              gridColumn: '1 / -1',
+              display: 'flex',
+              justifyContent: 'space-between',
+              gap: '0.5rem',
+            }}
+          >
+            {editingId && (
+              <button type="button" className="lg-btn" onClick={resetForm}>
+                Abbrechen
+              </button>
+            )}
+            <button className="lg-btn lg-btn-primary" type="submit">
+              {editingId ? 'Aktualisieren' : 'Speichern'}
+            </button>
           </div>
         </form>
       </div>
 
       <h2 style={{ marginTop: '2rem' }}>Geplante Events</h2>
-      <div style={{ display: 'grid', gap: '0.7rem' }}>
-        {list.map((e) => (
-          <div key={e.id} className="lg-panel" style={{ padding: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.6rem' }}>
-            <div>
-              <div style={{ fontWeight: 600 }}>{e.title} <span className={gameTagClass(e.game)} style={{ marginLeft: 8 }}>{e.game}</span></div>
-              <div className="mono lg-muted" style={{ fontSize: '0.78rem' }}>{e.date}</div>
+      {loading && (
+        <div className="lg-muted mono" style={{ fontSize: '0.8rem' }}>
+          Lade Events…
+        </div>
+      )}
+      {!loading && (
+        <div style={{ display: 'grid', gap: '0.7rem' }}>
+          {list.map((e) => (
+            <div
+              key={e.id}
+              className="lg-panel"
+              style={{
+                padding: '1rem',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                gap: '0.6rem',
+              }}
+            >
+              <div>
+                <div style={{ fontWeight: 600 }}>
+                  {e.title}{' '}
+                  <span className={gameTagClass(e.game)} style={{ marginLeft: 8 }}>
+                    {e.game}
+                  </span>
+                </div>
+                <div className="mono lg-muted" style={{ fontSize: '0.78rem' }}>
+                  {e.date}
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: '0.4rem' }}>
+                <button className="lg-btn" onClick={() => startEdit(e)}>
+                  Bearbeiten
+                </button>
+                <button
+                  className="lg-btn lg-btn-danger"
+                  onClick={() => remove(e.id as string)}
+                >
+                  Löschen
+                </button>
+              </div>
             </div>
-            <div style={{ display: 'flex', gap: '0.4rem' }}>
-              <button className="lg-btn">Bearbeiten</button>
-              <button className="lg-btn lg-btn-danger" onClick={() => remove(e.id)}>Löschen</button>
-            </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </>
   )
 }
