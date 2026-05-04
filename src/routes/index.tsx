@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { Link, createFileRoute } from '@tanstack/react-router'
 import settings from '@/data/settings.json'
 import members from '@/data/members.json'
@@ -25,7 +26,6 @@ function HomePage() {
     <div style={{ maxWidth: 1280, margin: '0 auto', padding: '1.5rem 1.25rem 0' }}>
       {/* ----- Banner ----- */}
       <section className="lg-banner" style={{ aspectRatio: '24 / 9', minHeight: 260 }}>
-        {/* Banner-Bild kommt aus settings.json → kann später über Admin/API gesetzt werden. */}
         <img src={settings.bannerUrl} alt={`${settings.clanName} Banner`} />
         <div className="lg-banner-overlay">
           <div
@@ -36,9 +36,7 @@ function HomePage() {
               fontSize: '0.8rem',
               textTransform: 'uppercase',
             }}
-          >
-            {/* optional label removed */}
-          </div>
+          />
 
           <h1
             style={{
@@ -97,24 +95,16 @@ function HomePage() {
           gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
         }}
       >
-        {/* Roster Teaser */}
+        {/* Roster Teaser als Slideshow */}
         <div className="lg-panel" style={{ padding: '1.4rem' }}>
-          <SectionHead label="// ROSTER" title="Unsere Squad" link={{ to: '/roster', label: 'Komplettes Roster' }} />
-          <div style={{ display: 'grid', gap: '0.6rem' }}>
-            {featuredMembers.map((m) => (
-              <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: '0.7rem' }}>
-                <img src={m.avatar} alt={m.name} className="lg-avatar" style={{ width: 44, height: 44 }} />
-                <div>
-                  <div style={{ fontFamily: 'var(--font-headline)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                    {m.name}
-                  </div>
-                  <div className="lg-muted" style={{ fontSize: '0.8rem' }}>
-                    {m.role}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+          <SectionHead
+            label="// ROSTER"
+            title="Unsere Squad"
+            link={{ to: '/roster', label: 'Komplettes Roster' }}
+          />
+          {featuredMembers.length > 0 && (
+            <RosterTeaserCarousel members={featuredMembers} />
+          )}
         </div>
 
         {/* Events Teaser */}
@@ -197,9 +187,18 @@ interface SectionHeadProps {
   title: string
   link?: { to: string; label: string }
 }
+
 function SectionHead({ label, title, link }: SectionHeadProps) {
   return (
-    <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: '1rem', gap: '1rem' }}>
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'flex-end',
+        justifyContent: 'space-between',
+        marginBottom: '1rem',
+        gap: '1rem',
+      }}
+    >
       <div>
         <div className="mono lg-muted" style={{ fontSize: '0.75rem', letterSpacing: '0.18em' }}>
           {label}
@@ -211,6 +210,77 @@ function SectionHead({ label, title, link }: SectionHeadProps) {
           {link.label} →
         </Link>
       )}
+    </div>
+  )
+}
+
+interface RosterTeaserCarouselProps {
+  members: Member[]
+}
+
+function RosterTeaserCarousel({ members }: RosterTeaserCarouselProps) {
+  const [index, setIndex] = useState(0)
+
+  useEffect(() => {
+    if (members.length <= 1) return
+    const id = setInterval(() => {
+      setIndex((prev) => (prev + 1) % members.length)
+    }, 4000)
+    return () => clearInterval(id)
+  }, [members.length])
+
+  const current = members[index]
+
+  return (
+    <div style={{ marginTop: '0.8rem' }}>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.7rem',
+          minHeight: 64,
+        }}
+      >
+        <img
+          src={current.avatar || '/placeholder.png'}
+          alt={current.name}
+          className="lg-avatar"
+          style={{ width: 44, height: 44, objectFit: 'cover' }}
+        />
+        <div>
+          <div
+            style={{
+              fontFamily: 'var(--font-headline)',
+              textTransform: 'uppercase',
+              letterSpacing: '0.05em',
+            }}
+          >
+            {current.name}
+          </div>
+          <div className="lg-muted" style={{ fontSize: '0.8rem' }}>
+            {current.role}
+          </div>
+        </div>
+      </div>
+
+      <div style={{ marginTop: '0.6rem', display: 'flex', gap: '0.35rem' }}>
+        {members.map((m, i) => (
+          <button
+            key={m.id}
+            type="button"
+            onClick={() => setIndex(i)}
+            style={{
+              width: 8,
+              height: 8,
+              borderRadius: '999px',
+              border: 'none',
+              padding: 0,
+              background: i === index ? 'var(--clr-accent-arc)' : 'var(--clr-border)',
+              cursor: 'pointer',
+            }}
+          />
+        ))}
+      </div>
     </div>
   )
 }
