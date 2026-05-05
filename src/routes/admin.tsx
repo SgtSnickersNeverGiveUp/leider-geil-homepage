@@ -114,8 +114,7 @@ function AdminPage() {
             <span style={{ color: 'var(--clr-accent-arc)' }}>Leider Geil</span>
           </h1>
           <p className="lg-muted" style={{ marginTop: '0.4rem' }}>
-            Interner Bereich – aktuell ohne Auth. Daten werden noch nicht
-            persistiert.
+            Interner Bereich – Daten werden in Supabase gespeichert.
           </p>
         </div>
         <div
@@ -241,10 +240,7 @@ function BewerbungenTab() {
         ]}
       />
 
-      <div
-        className="lg-panel"
-        style={{ padding: '0', overflowX: 'auto' }}
-      >
+      <div className="lg-panel" style={{ padding: '0', overflowX: 'auto' }}>
         <table className="lg-table">
           <thead>
             <tr>
@@ -685,6 +681,19 @@ function RosterTab() {
    Events
    ================================================================== */
 
+// Hilfsfunktion: ISO -> datetime-local Value
+function toLocalInputValue(isoOrText: string) {
+  const d = new Date(isoOrText)
+  if (Number.isNaN(d.getTime())) return isoOrText
+  const pad = (n: number) => String(n).padStart(2, '0')
+  const yyyy = d.getFullYear()
+  const mm = pad(d.getMonth() + 1)
+  const dd = pad(d.getDate())
+  const hh = pad(d.getHours())
+  const min = pad(d.getMinutes())
+  return `${yyyy}-${mm}-${dd}T${hh}:${min}`
+}
+
 async function saveEvent(options: {
   supabase: typeof supabase
   draft: {
@@ -858,7 +867,6 @@ function EventsTab() {
 
   async function addOrUpdate(e: React.FormEvent) {
     e.preventDefault()
-    console.log('addOrUpdate START', { editingId, draft, hasFile: !!eventImageFile })
 
     try {
       const saved = await saveEvent({
@@ -903,7 +911,7 @@ function EventsTab() {
     setEditingId(ev.id as string)
     setDraft({
       title: ev.title,
-      date: ev.date,
+      date: toLocalInputValue(ev.date),
       game: ev.game,
       description: ev.description || '',
     })
@@ -914,16 +922,6 @@ function EventsTab() {
   return (
     <>
       <div className="lg-panel" style={{ padding: '1.5rem' }}>
-        <div style={{ color: 'red', fontWeight: 'bold' }}>
-          DEBUG: EventsTab LIVE
-        </div>
-        <button
-  type="button"
-  className="lg-btn"
-  onClick={() => console.log('TEST-KNOPF KLICK', { draft, editingId })}
->
-  TEST-LOG
-</button>
         <h2 style={{ marginTop: 0 }}>
           {editingId ? 'Event bearbeiten' : 'Neues Event'}
         </h2>
