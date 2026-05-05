@@ -8,12 +8,8 @@ import type { ClanEvent, ClanRole, Member, VideoItem } from '@/lib/types'
 import { gameTagClass } from '@/lib/types'
 import { Modal } from '@/components/Modal'
 import { OnlineLamp } from '@/components/OnlineLamp'
-import { supabase } from '../lib/supabase';
+import { supabase } from '../lib/supabase'
 import type React from 'react'
-
-
-// !!! WICHTIG: Du musst deinen supabase client hier importieren !!!
-// import { supabase } from '@/lib/supabase' 
 
 // Simple client-side guard (lightweight, not production-secure)
 const ADMIN_PASSWORD = 'Snickers2026!' // ändere hier dein Passwort
@@ -26,19 +22,37 @@ function AdminWrapper(props: any) {
     return (
       <div style={{ maxWidth: 480, margin: '4rem auto', padding: '1rem' }}>
         <h2>Admin Login</h2>
-        <p style={{ color: 'var(--clr-text-muted)' }}>Dieser Bereich ist nur für Admins. Bitte Passwort eingeben.</p>
+        <p style={{ color: 'var(--clr-text-muted)' }}>
+          Dieser Bereich ist nur für Admins. Bitte Passwort eingeben.
+        </p>
         <input
           type="password"
           value={pw}
           onChange={(e) => setPw(e.target.value)}
           placeholder="Admin-Passwort"
-          style={{ width: '100%', padding: '.6rem', marginBottom: '.6rem', borderRadius: 6, border: '1px solid var(--clr-border)', background: 'var(--clr-bg)', color: 'var(--clr-text)' }}
+          style={{
+            width: '100%',
+            padding: '.6rem',
+            marginBottom: '.6rem',
+            borderRadius: 6,
+            border: '1px solid var(--clr-border)',
+            background: 'var(--clr-bg)',
+            color: 'var(--clr-text)',
+          }}
         />
         <div style={{ display: 'flex', gap: '.6rem' }}>
-          <button className="lg-btn" onClick={() => { if (pw === ADMIN_PASSWORD) setAuthorized(true); else alert('Falsches Passwort'); }}>
+          <button
+            className="lg-btn"
+            onClick={() => {
+              if (pw === ADMIN_PASSWORD) setAuthorized(true)
+              else alert('Falsches Passwort')
+            }}
+          >
             Login
           </button>
-          <button className="btn-sm" onClick={() => setPw('')}>Zurücksetzen</button>
+          <button className="btn-sm" onClick={() => setPw('')}>
+            Zurücksetzen
+          </button>
         </div>
       </div>
     )
@@ -72,21 +86,51 @@ function AdminPage() {
   const [tab, setTab] = useState<Tab>('bewerbungen')
 
   return (
-    <div style={{ maxWidth: 1280, margin: '0 auto', padding: '2rem 1.25rem' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: '1rem' }}>
+    <div
+      style={{
+        maxWidth: 1280,
+        margin: '0 auto',
+        padding: '2rem 1.25rem',
+      }}
+    >
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'flex-end',
+          flexWrap: 'wrap',
+          gap: '1rem',
+        }}
+      >
         <div>
-          <div className="mono lg-muted" style={{ fontSize: '0.78rem', letterSpacing: '0.18em' }}>
+          <div
+            className="mono lg-muted"
+            style={{ fontSize: '0.78rem', letterSpacing: '0.18em' }}
+          >
             // ADMIN AREA
           </div>
           <h1 style={{ margin: '0.3rem 0 0', fontSize: '2rem' }}>
-            Dashboard <span style={{ color: 'var(--clr-accent-arc)' }}>Leider Geil</span>
+            Dashboard{' '}
+            <span style={{ color: 'var(--clr-accent-arc)' }}>Leider Geil</span>
           </h1>
           <p className="lg-muted" style={{ marginTop: '0.4rem' }}>
-            Interner Bereich – aktuell ohne Auth. Daten werden noch nicht persistiert.
+            Interner Bereich – aktuell ohne Auth. Daten werden noch nicht
+            persistiert.
           </p>
         </div>
-        <div className="lg-panel" style={{ padding: '0.6rem 0.9rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <OnlineLamp /> <span className="mono" style={{ fontSize: '0.8rem' }}>session: dev-mode</span>
+        <div
+          className="lg-panel"
+          style={{
+            padding: '0.6rem 0.9rem',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+          }}
+        >
+          <OnlineLamp />{' '}
+          <span className="mono" style={{ fontSize: '0.8rem' }}>
+            session: dev-mode
+          </span>
         </div>
       </div>
 
@@ -110,9 +154,13 @@ function AdminPage() {
               style={{
                 padding: '0.5rem 0.9rem',
                 fontSize: '0.78rem',
-                borderColor: active ? 'var(--clr-accent-arc)' : 'var(--clr-border)',
+                borderColor: active
+                  ? 'var(--clr-accent-arc)'
+                  : 'var(--clr-border)',
                 color: active ? 'var(--clr-accent-arc)' : 'var(--clr-text)',
-                boxShadow: active ? '0 0 14px rgba(15, 242, 169, 0.25)' : 'none',
+                boxShadow: active
+                  ? '0 0 14px rgba(15, 242, 169, 0.25)'
+                  : 'none',
               }}
             >
               {t.label}
@@ -148,9 +196,33 @@ interface Application {
 }
 
 const dummyApplications: Application[] = [
-  { id: 'a1', name: 'NeonPanda', alter: 22, spiel: 'PUBG', rolle: 'Member', text: 'Ich spiele gerne im Squad und bringe Erfahrung aus Liga-Matches mit.', date: '2026-04-21' },
-  { id: 'a2', name: 'CtrlAltDel', alter: 28, spiel: 'ARC Raiders', rolle: 'Officer', text: 'Suche festen Clan, in dem auch Strategie zählt.', date: '2026-04-19' },
-  { id: 'a3', name: 'BananaCrash', alter: 19, spiel: 'PUBG', rolle: 'Recruit', text: 'Erstkontakt – Spaß steht für mich klar im Vordergrund.', date: '2026-04-17' },
+  {
+    id: 'a1',
+    name: 'NeonPanda',
+    alter: 22,
+    spiel: 'PUBG',
+    rolle: 'Member',
+    text: 'Ich spiele gerne im Squad und bringe Erfahrung aus Liga-Matches mit.',
+    date: '2026-04-21',
+  },
+  {
+    id: 'a2',
+    name: 'CtrlAltDel',
+    alter: 28,
+    spiel: 'ARC Raiders',
+    rolle: 'Officer',
+    text: 'Suche festen Clan, in dem auch Strategie zählt.',
+    date: '2026-04-19',
+  },
+  {
+    id: 'a3',
+    name: 'BananaCrash',
+    alter: 19,
+    spiel: 'PUBG',
+    rolle: 'Recruit',
+    text: 'Erstkontakt – Spaß steht für mich klar im Vordergrund.',
+    date: '2026-04-17',
+  },
 ]
 
 function BewerbungenTab() {
@@ -161,13 +233,18 @@ function BewerbungenTab() {
 
   return (
     <>
-      <Stats stats={[
-        { label: 'Bewerbungen', value: total },
-        { label: 'PUBG', value: pubg, accent: 'var(--clr-accent-pubg)' },
-        { label: 'ARC Raiders', value: arc, accent: 'var(--clr-accent-arc)' },
-      ]} />
+      <Stats
+        stats={[
+          { label: 'Bewerbungen', value: total },
+          { label: 'PUBG', value: pubg, accent: 'var(--clr-accent-pubg)' },
+          { label: 'ARC Raiders', value: arc, accent: 'var(--clr-accent-arc)' },
+        ]}
+      />
 
-      <div className="lg-panel" style={{ padding: '0', overflowX: 'auto' }}>
+      <div
+        className="lg-panel"
+        style={{ padding: '0', overflowX: 'auto' }}
+      >
         <table className="lg-table">
           <thead>
             <tr>
@@ -183,14 +260,39 @@ function BewerbungenTab() {
           <tbody>
             {dummyApplications.map((a) => (
               <tr key={a.id}>
-                <td><strong>{a.name}</strong></td>
-                <td>{a.alter}</td>
-                <td><span className={gameTagClass(a.spiel)}>{a.spiel}</span></td>
-                <td>{a.rolle}</td>
-                <td style={{ maxWidth: 280, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a.text}</td>
-                <td className="mono lg-muted" style={{ fontSize: '0.8rem' }}>{a.date}</td>
                 <td>
-                  <button className="lg-btn" style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem' }} onClick={() => setOpen(a)}>
+                  <strong>{a.name}</strong>
+                </td>
+                <td>{a.alter}</td>
+                <td>
+                  <span className={gameTagClass(a.spiel)}>{a.spiel}</span>
+                </td>
+                <td>{a.rolle}</td>
+                <td
+                  style={{
+                    maxWidth: 280,
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {a.text}
+                </td>
+                <td
+                  className="mono lg-muted"
+                  style={{ fontSize: '0.8rem' }}
+                >
+                  {a.date}
+                </td>
+                <td>
+                  <button
+                    className="lg-btn"
+                    style={{
+                      padding: '0.3rem 0.6rem',
+                      fontSize: '0.75rem',
+                    }}
+                    onClick={() => setOpen(a)}
+                  >
                     Details
                   </button>
                 </td>
@@ -200,7 +302,11 @@ function BewerbungenTab() {
         </table>
       </div>
 
-      <Modal open={!!open} onClose={() => setOpen(null)} title={open?.name ?? ''}>
+      <Modal
+        open={!!open}
+        onClose={() => setOpen(null)}
+        title={open?.name ?? ''}
+      >
         {open && (
           <div style={{ display: 'grid', gap: '0.6rem' }}>
             <KV label="Alter" value={open.alter} />
@@ -280,10 +386,16 @@ function RosterTab() {
       clan_role: draft.clanRole,
       bio: draft.bio,
       games: draft.games
-        ? draft.games.split(',').map((s) => s.trim()).filter(Boolean)
+        ? draft.games
+            .split(',')
+            .map((s) => s.trim())
+            .filter(Boolean)
         : [],
       fun_tags: draft.funTags
-        ? draft.funTags.split(',').map((s) => s.trim()).filter(Boolean)
+        ? draft.funTags
+            .split(',')
+            .map((s) => s.trim())
+            .filter(Boolean)
         : [],
     }
 
@@ -422,7 +534,9 @@ function RosterTab() {
               className="lg-input"
               placeholder="Sniper, Strategist"
               value={draft.funTags}
-              onChange={(e) => setDraft({ ...draft, funTags: e.target.value })}
+              onChange={(e) =>
+                setDraft({ ...draft, funTags: e.target.value })
+              }
             />
           </label>
           <label style={{ gridColumn: '1 / -1' }}>
@@ -494,7 +608,11 @@ function RosterTab() {
             }}
           >
             <div
-              style={{ display: 'flex', gap: '0.7rem', alignItems: 'center' }}
+              style={{
+                display: 'flex',
+                gap: '0.7rem',
+                alignItems: 'center',
+              }}
             >
               <img
                 className="lg-avatar"
@@ -563,10 +681,10 @@ function RosterTab() {
   )
 }
 
-
 /* ==================================================================
-   Events, Videos, Banner, EventAnmeldungen... (Rest bleibt identisch)
+   Events
    ================================================================== */
+
 async function saveEvent(options: {
   supabase: typeof supabase
   draft: {
@@ -603,7 +721,8 @@ async function saveEvent(options: {
       .maybeSingle()
 
     if (error) throw error
-    if (!updated) throw new Error('Update: keine Zeile gefunden (editingId passt nicht?)')
+    if (!updated)
+      throw new Error('Update: keine Zeile gefunden (editingId passt nicht?)')
 
     // Optional Bild
     if (file) {
@@ -615,7 +734,10 @@ async function saveEvent(options: {
         .from('event-images')
         .upload(filePath, file, { upsert: true })
 
-      if (uploadError) throw new Error('Bild-Upload fehlgeschlagen: ' + uploadError.message)
+      if (uploadError)
+        throw new Error(
+          'Bild-Upload fehlgeschlagen: ' + uploadError.message,
+        )
 
       const { data: publicUrlData } = supabase
         .storage
@@ -662,7 +784,10 @@ async function saveEvent(options: {
         .from('event-images')
         .upload(filePath, file, { upsert: true })
 
-      if (uploadError) throw new Error('Bild-Upload fehlgeschlagen: ' + uploadError.message)
+      if (uploadError)
+        throw new Error(
+          'Bild-Upload fehlgeschlagen: ' + uploadError.message,
+        )
 
       const { data: publicUrlData } = supabase
         .storage
@@ -683,6 +808,7 @@ async function saveEvent(options: {
     return inserted
   }
 }
+
 function EventsTab() {
   const [list, setList] = useState<ClanEvent[]>([])
   const [draft, setDraft] = useState<{
@@ -700,7 +826,6 @@ function EventsTab() {
   const [loading, setLoading] = useState(true)
   const [eventImageFile, setEventImageFile] = useState<File | null>(null)
 
-  // Events von Supabase laden
   useEffect(() => {
     const load = async () => {
       setLoading(true)
@@ -731,85 +856,87 @@ function EventsTab() {
     setEventImageFile(null)
   }
 
-  // Bild zu Supabase Storage hochladen und Public URL zurückgeben
-      async function uploadEventImage(file: File, eventId: string) {
-    const ext = file.name.split('.').pop() || 'jpg'
-    const filePath = `events/${eventId}.${ext}`
+  async function addOrUpdate(e: React.FormEvent) {
+    e.preventDefault()
+    console.log('addOrUpdate START', { editingId, draft, hasFile: !!eventImageFile })
 
-    const { error: uploadError } = await supabase
-      .storage
-      .from('event-images')
-      .upload(filePath, file, {
-        upsert: true,
+    try {
+      const saved = await saveEvent({
+        supabase,
+        draft,
+        editingId,
+        file: eventImageFile,
       })
 
-    if (uploadError) {
-      throw new Error('Bild-Upload fehlgeschlagen: ' + uploadError.message)
+      if (saved) {
+        setList((prev) => {
+          if (editingId) {
+            // bestehendes Event updaten
+            return prev.map((ev) =>
+              ev.id === saved.id ? (saved as ClanEvent) : ev,
+            )
+          }
+          // neues Event vorne einfügen
+          return [saved as ClanEvent, ...prev]
+        })
+      }
+
+      alert(editingId ? 'Event aktualisiert.' : 'Event gespeichert.')
+      resetForm()
+    } catch (err) {
+      console.error('Fehler beim Speichern:', err)
+      alert('Speicherfehler: ' + (err as Error).message)
     }
-
-    const { data } = supabase
-      .storage
-      .from('event-images')
-      .getPublicUrl(filePath)
-
-    return data.publicUrl as string
   }
 
-    async function addOrUpdate(e: React.FormEvent) {
-  e.preventDefault()
+  async function remove(id: string) {
+    if (!confirm('Event wirklich löschen?')) return
+    const { error } = await supabase.from('events').delete().eq('id', id)
+    if (error) {
+      alert('Fehler beim Löschen: ' + error.message)
+    } else {
+      setList((l) => l.filter((e) => e.id !== id))
+    }
+  }
 
-  try {
-    const saved = await saveEvent({
-      supabase,
-      draft,
-      editingId,
-      file: eventImageFile,
+  function startEdit(ev: ClanEvent) {
+    setEditingId(ev.id as string)
+    setDraft({
+      title: ev.title,
+      date: ev.date,
+      game: ev.game,
+      description: ev.description || '',
     })
-
-    if (saved) {
-      setList((prev) => {
-        // Wenn editingId existiert: Liste updaten
-        if (editingId) {
-          return prev.map((ev) => (ev.id === saved.id ? (saved as ClanEvent) : ev))
-        }
-        // Sonst: Neues Event vorne einfügen
-        return [saved as ClanEvent, ...prev]
-      })
-    }
-
-    alert(editingId ? 'Event aktualisiert.' : 'Event gespeichert.')
-    resetForm()
-  } catch (err) {
-    console.error('Fehler beim Speichern:', err)
-    alert('Speicherfehler: ' + (err as Error).message)
+    setEventImageFile(null)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
-}
 
- return (
-  <>
-    <div className="lg-panel" style={{ padding: '1.5rem' }}>
-      <div style={{ color: 'red', fontWeight: 'bold' }}>
-        DEBUG: EventsTab LIVE
-      </div>
-      <h2 style={{ marginTop: 0 }}>
-        {editingId ? 'Event bearbeiten' : 'Neues Event'}
-      </h2>
-      <form
-        onSubmit={addOrUpdate}
-        style={{
-          display: 'grid',
-          gap: '0.8rem',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-        }}
-      >
-        {/* ... Rest unverändert ... */}
+  return (
+    <>
+      <div className="lg-panel" style={{ padding: '1.5rem' }}>
+        <div style={{ color: 'red', fontWeight: 'bold' }}>
+          DEBUG: EventsTab LIVE
+        </div>
+        <h2 style={{ marginTop: 0 }}>
+          {editingId ? 'Event bearbeiten' : 'Neues Event'}
+        </h2>
+        <form
+          onSubmit={addOrUpdate}
+          style={{
+            display: 'grid',
+            gap: '0.8rem',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+          }}
+        >
           <label>
             <span className="lg-label">Titel</span>
             <input
               className="lg-input"
               required
               value={draft.title}
-              onChange={(e) => setDraft({ ...draft, title: e.target.value })}
+              onChange={(e) =>
+                setDraft({ ...draft, title: e.target.value })
+              }
             />
           </label>
           <label>
@@ -819,7 +946,9 @@ function EventsTab() {
               type="datetime-local"
               required
               value={draft.date}
-              onChange={(e) => setDraft({ ...draft, date: e.target.value })}
+              onChange={(e) =>
+                setDraft({ ...draft, date: e.target.value })
+              }
             />
           </label>
           <label>
@@ -827,7 +956,9 @@ function EventsTab() {
             <select
               className="lg-select"
               value={draft.game}
-              onChange={(e) => setDraft({ ...draft, game: e.target.value })}
+              onChange={(e) =>
+                setDraft({ ...draft, game: e.target.value })
+              }
             >
               <option>PUBG</option>
               <option>ARC Raiders</option>
@@ -845,7 +976,9 @@ function EventsTab() {
             />
           </label>
           <label style={{ gridColumn: '1 / -1' }}>
-            <span className="lg-label">Event-Bild (Upload zu Supabase Storage)</span>
+            <span className="lg-label">
+              Event-Bild (Upload zu Supabase Storage)
+            </span>
             <input
               className="lg-input"
               type="file"
@@ -900,11 +1033,17 @@ function EventsTab() {
               <div>
                 <div style={{ fontWeight: 600 }}>
                   {e.title}{' '}
-                  <span className={gameTagClass(e.game)} style={{ marginLeft: 8 }}>
+                  <span
+                    className={gameTagClass(e.game)}
+                    style={{ marginLeft: 8 }}
+                  >
                     {e.game}
                   </span>
                 </div>
-                <div className="mono lg-muted" style={{ fontSize: '0.78rem' }}>
+                <div
+                  className="mono lg-muted"
+                  style={{ fontSize: '0.78rem' }}
+                >
                   {e.date}
                 </div>
               </div>
@@ -927,13 +1066,21 @@ function EventsTab() {
   )
 }
 
+/* ==================================================================
+   Videos
+   ================================================================== */
+
 function VideosTab() {
   const [list, setList] = useState<VideoItem[]>(videos as VideoItem[])
   const [draft, setDraft] = useState({ title: '', url: '' })
 
   function thumbFromYoutube(url: string): string {
-    const m = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([\w-]+)/)
-    return m ? `https://img.youtube.com/vi/${m[1]}/hqdefault.jpg` : '/placeholder.png'
+    const m = url.match(
+      /(?:youtube\.com\/watch\?v=|youtu\.be\/)([\w-]+)/,
+    )
+    return m
+      ? `https://img.youtube.com/vi/${m[1]}/hqdefault.jpg`
+      : '/placeholder.png'
   }
 
   function add(e: React.FormEvent) {
@@ -960,24 +1107,96 @@ function VideosTab() {
     <>
       <div className="lg-panel" style={{ padding: '1.5rem' }}>
         <h2 style={{ marginTop: 0 }}>Neues Video</h2>
-        <form onSubmit={add} style={{ display: 'grid', gap: '0.8rem', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
-          <label><span className="lg-label">Titel</span><input className="lg-input" required value={draft.title} onChange={(e) => setDraft({ ...draft, title: e.target.value })} /></label>
-          <label><span className="lg-label">YouTube-/Twitch-URL</span><input className="lg-input" required value={draft.url} onChange={(e) => setDraft({ ...draft, url: e.target.value })} /></label>
-          <div style={{ gridColumn: '1 / -1', display: 'flex', justifyContent: 'flex-end' }}>
-            <button className="lg-btn lg-btn-primary" type="submit">Speichern</button>
+        <form
+          onSubmit={add}
+          style={{
+            display: 'grid',
+            gap: '0.8rem',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+          }}
+        >
+          <label>
+            <span className="lg-label">Titel</span>
+            <input
+              className="lg-input"
+              required
+              value={draft.title}
+              onChange={(e) =>
+                setDraft({ ...draft, title: e.target.value })
+              }
+            />
+          </label>
+          <label>
+            <span className="lg-label">YouTube-/Twitch-URL</span>
+            <input
+              className="lg-input"
+              required
+              value={draft.url}
+              onChange={(e) =>
+                setDraft({ ...draft, url: e.target.value })
+              }
+            />
+          </label>
+          <div
+            style={{
+              gridColumn: '1 / -1',
+              display: 'flex',
+              justifyContent: 'flex-end',
+            }}
+          >
+            <button className="lg-btn lg-btn-primary" type="submit">
+              Speichern
+            </button>
           </div>
         </form>
       </div>
 
       <h2 style={{ marginTop: '2rem' }}>Video-Liste</h2>
-      <div style={{ display: 'grid', gap: '1rem', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
+      <div
+        style={{
+          display: 'grid',
+          gap: '1rem',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+        }}
+      >
         {list.map((v) => (
-          <div key={v.id} className="lg-panel" style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-            <img src={v.thumbnail} alt={v.title} style={{ aspectRatio: '16/9', objectFit: 'cover' }} />
-            <div style={{ padding: '0.8rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', flex: 1 }}>
+          <div
+            key={v.id}
+            className="lg-panel"
+            style={{
+              overflow: 'hidden',
+              display: 'flex',
+              flexDirection: 'column',
+            }}
+          >
+            <img
+              src={v.thumbnail}
+              alt={v.title}
+              style={{ aspectRatio: '16/9', objectFit: 'cover' }}
+            />
+            <div
+              style={{
+                padding: '0.8rem',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '0.5rem',
+                flex: 1,
+              }}
+            >
               <div style={{ fontWeight: 600 }}>{v.title}</div>
-              <div className="mono lg-muted" style={{ fontSize: '0.75rem' }}>{v.platform}</div>
-              <button className="lg-btn lg-btn-danger" style={{ marginTop: 'auto' }} onClick={() => remove(v.id)}>Löschen</button>
+              <div
+                className="mono lg-muted"
+                style={{ fontSize: '0.75rem' }}
+              >
+                {v.platform}
+              </div>
+              <button
+                className="lg-btn lg-btn-danger"
+                style={{ marginTop: 'auto' }}
+                onClick={() => remove(v.id)}
+              >
+                Löschen
+              </button>
             </div>
           </div>
         ))}
@@ -985,6 +1204,10 @@ function VideosTab() {
     </>
   )
 }
+
+/* ==================================================================
+   Banner / News-Ticker
+   ================================================================== */
 
 function BannerTab() {
   const [bannerUrl, setBannerUrl] = useState(settings.bannerUrl)
@@ -1000,25 +1223,84 @@ function BannerTab() {
     <>
       <div className="lg-panel" style={{ padding: '1.5rem' }}>
         <h2 style={{ marginTop: 0 }}>Banner</h2>
-        <p className="lg-muted" style={{ marginTop: 0 }}>Empfohlen: 1920×600 px.</p>
-        <div style={{ aspectRatio: '24 / 7', borderRadius: 12, overflow: 'hidden', border: '1px solid var(--clr-border)', marginBottom: '1rem' }}>
-          <img src={bannerUrl} alt="Banner-Vorschau" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+        <p className="lg-muted" style={{ marginTop: 0 }}>
+          Empfohlen: 1920×600 px.
+        </p>
+        <div
+          style={{
+            aspectRatio: '24 / 7',
+            borderRadius: 12,
+            overflow: 'hidden',
+            border: '1px solid var(--clr-border)',
+            marginBottom: '1rem',
+          }}
+        >
+          <img
+            src={bannerUrl}
+            alt="Banner-Vorschau"
+            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+          />
         </div>
-        <form onSubmit={save} style={{ display: 'grid', gap: '0.8rem' }}>
-          <label><span className="lg-label">Banner-URL</span><input className="lg-input" value={bannerUrl} onChange={(e) => setBannerUrl(e.target.value)} /></label>
-          <label><span className="lg-label">… oder Datei hochladen (später Netlify Blobs)</span><input className="lg-input" type="file" /></label>
+        <form
+          onSubmit={save}
+          style={{ display: 'grid', gap: '0.8rem' }}
+        >
+          <label>
+            <span className="lg-label">Banner-URL</span>
+            <input
+              className="lg-input"
+              value={bannerUrl}
+              onChange={(e) => setBannerUrl(e.target.value)}
+            />
+          </label>
+          <label>
+            <span className="lg-label">
+              … oder Datei hochladen (später Netlify Blobs)
+            </span>
+            <input className="lg-input" type="file" />
+          </label>
           <hr className="lg-divider" />
           <h2 style={{ margin: 0 }}>News-Ticker</h2>
-          <label><span className="lg-label">Standard-Lauftext</span><textarea className="lg-textarea" value={tickerText} onChange={(e) => setTickerText(e.target.value)} /></label>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            {savedAt && <span className="mono" style={{ color: 'var(--clr-accent-arc)' }}>✓ Gespeichert um {savedAt}</span>}
-            <button className="lg-btn lg-btn-primary" type="submit" style={{ marginLeft: 'auto' }}>Speichern</button>
+          <label>
+            <span className="lg-label">Standard-Lauftext</span>
+            <textarea
+              className="lg-textarea"
+              value={tickerText}
+              onChange={(e) => setTickerText(e.target.value)}
+            />
+          </label>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}
+          >
+            {savedAt && (
+              <span
+                className="mono"
+                style={{ color: 'var(--clr-accent-arc)' }}
+              >
+                ✓ Gespeichert um {savedAt}
+              </span>
+            )}
+            <button
+              className="lg-btn lg-btn-primary"
+              type="submit"
+              style={{ marginLeft: 'auto' }}
+            >
+              Speichern
+            </button>
           </div>
         </form>
       </div>
     </>
   )
 }
+
+/* ==================================================================
+   Event-Anmeldungen
+   ================================================================== */
 
 interface Signup {
   id: string
@@ -1031,9 +1313,33 @@ interface Signup {
 }
 
 const dummySignups: Signup[] = [
-  { id: 's1', name: 'NeonByte', spiel: 'PUBG', clan: 'Leider Geil', spieler: 4, bemerkungen: 'Voller Squad, alle ready.', date: '2026-04-22' },
-  { id: 's2', name: 'StaticHaze', spiel: 'ARC Raiders', clan: 'Solo', spieler: 1, bemerkungen: 'Würde gerne mit Random-Squad spielen.', date: '2026-04-20' },
-  { id: 's3', name: 'CtrlAltDel', spiel: 'PUBG', clan: 'Der astreime', spieler: 4, bemerkungen: 'Allianz-Match-Anfrage.', date: '2026-04-18' },
+  {
+    id: 's1',
+    name: 'NeonByte',
+    spiel: 'PUBG',
+    clan: 'Leider Geil',
+    spieler: 4,
+    bemerkungen: 'Voller Squad, alle ready.',
+    date: '2026-04-22',
+  },
+  {
+    id: 's2',
+    name: 'StaticHaze',
+    spiel: 'ARC Raiders',
+    clan: 'Solo',
+    spieler: 1,
+    bemerkungen: 'Würde gerne mit Random-Squad spielen.',
+    date: '2026-04-20',
+  },
+  {
+    id: 's3',
+    name: 'CtrlAltDel',
+    spiel: 'PUBG',
+    clan: 'Der astreime',
+    spieler: 4,
+    bemerkungen: 'Allianz-Match-Anfrage.',
+    date: '2026-04-18',
+  },
 ]
 
 function EventAnmeldungenTab() {
@@ -1046,11 +1352,13 @@ function EventAnmeldungenTab() {
 
   return (
     <>
-      <Stats stats={[
-        { label: 'Anmeldungen', value: total },
-        { label: 'PUBG', value: pubg, accent: 'var(--clr-accent-pubg)' },
-        { label: 'ARC Raiders', value: arc, accent: 'var(--clr-accent-arc)' },
-      ]} />
+      <Stats
+        stats={[
+          { label: 'Anmeldungen', value: total },
+          { label: 'PUBG', value: pubg, accent: 'var(--clr-accent-pubg)' },
+          { label: 'ARC Raiders', value: arc, accent: 'var(--clr-accent-arc)' },
+        ]}
+      />
 
       <div className="lg-panel" style={{ overflowX: 'auto' }}>
         <table className="lg-table">
@@ -1068,15 +1376,53 @@ function EventAnmeldungenTab() {
           <tbody>
             {list.map((s) => (
               <tr key={s.id}>
-                <td><strong>{s.name}</strong></td>
-                <td><span className={gameTagClass(s.spiel)}>{s.spiel}</span></td>
+                <td>
+                  <strong>{s.name}</strong>
+                </td>
+                <td>
+                  <span className={gameTagClass(s.spiel)}>{s.spiel}</span>
+                </td>
                 <td>{s.clan || '—'}</td>
                 <td>{s.spieler}</td>
-                <td style={{ maxWidth: 280, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.bemerkungen}</td>
-                <td className="mono lg-muted" style={{ fontSize: '0.8rem' }}>{s.date}</td>
+                <td
+                  style={{
+                    maxWidth: 280,
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {s.bemerkungen}
+                </td>
+                <td
+                  className="mono lg-muted"
+                  style={{ fontSize: '0.8rem' }}
+                >
+                  {s.date}
+                </td>
                 <td style={{ display: 'flex', gap: '0.3rem' }}>
-                  <button className="lg-btn" style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem' }} onClick={() => setOpen(s)}>Details</button>
-                  <button className="lg-btn lg-btn-danger" style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem' }} onClick={() => setList((l) => l.filter((x) => x.id !== s.id))}>×</button>
+                  <button
+                    className="lg-btn"
+                    style={{
+                      padding: '0.3rem 0.6rem',
+                      fontSize: '0.75rem',
+                    }}
+                    onClick={() => setOpen(s)}
+                  >
+                    Details
+                  </button>
+                  <button
+                    className="lg-btn lg-btn-danger"
+                    style={{
+                      padding: '0.3rem 0.6rem',
+                      fontSize: '0.75rem',
+                    }}
+                    onClick={() =>
+                      setList((l) => l.filter((x) => x.id !== s.id))
+                    }
+                  >
+                    ×
+                  </button>
                 </td>
               </tr>
             ))}
@@ -1084,7 +1430,11 @@ function EventAnmeldungenTab() {
         </table>
       </div>
 
-      <Modal open={!!open} onClose={() => setOpen(null)} title={open?.name ?? ''}>
+      <Modal
+        open={!!open}
+        onClose={() => setOpen(null)}
+        title={open?.name ?? ''}
+      >
         {open && (
           <div style={{ display: 'grid', gap: '0.6rem' }}>
             <KV label="Spiel" value={open.spiel} />
@@ -1102,13 +1452,41 @@ function EventAnmeldungenTab() {
   )
 }
 
-function Stats({ stats }: { stats: { label: string; value: number; accent?: string }[] }) {
+/* ==================================================================
+   Shared Components
+   ================================================================== */
+
+function Stats({
+  stats,
+}: {
+  stats: { label: string; value: number; accent?: string }[]
+}) {
   return (
-    <div style={{ display: 'grid', gap: '0.8rem', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', marginBottom: '1.2rem' }}>
+    <div
+      style={{
+        display: 'grid',
+        gap: '0.8rem',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
+        marginBottom: '1.2rem',
+      }}
+    >
       {stats.map((s) => (
         <div key={s.label} className="lg-panel" style={{ padding: '1rem' }}>
-          <div className="mono lg-muted" style={{ fontSize: '0.75rem', letterSpacing: '0.1em' }}>{s.label.toUpperCase()}</div>
-          <div style={{ fontFamily: 'var(--font-headline)', fontSize: '2rem', color: s.accent ?? 'var(--clr-text)' }}>{s.value}</div>
+          <div
+            className="mono lg-muted"
+            style={{ fontSize: '0.75rem', letterSpacing: '0.1em' }}
+          >
+            {s.label.toUpperCase()}
+          </div>
+          <div
+            style={{
+              fontFamily: 'var(--font-headline)',
+              fontSize: '2rem',
+              color: s.accent ?? 'var(--clr-text)',
+            }}
+          >
+            {s.value}
+          </div>
         </div>
       ))}
     </div>
@@ -1117,10 +1495,18 @@ function Stats({ stats }: { stats: { label: string; value: number; accent?: stri
 
 function KV({ label, value }: { label: string; value: React.ReactNode }) {
   return (
-    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px dashed var(--clr-border)', padding: '0.4rem 0' }}>
-      <span className="lg-muted mono" style={{ fontSize: '0.8rem' }}>{label}</span>
+    <div
+      style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        borderBottom: '1px dashed var(--clr-border)',
+        padding: '0.4rem 0',
+      }}
+    >
+      <span className="lg-muted mono" style={{ fontSize: '0.8rem' }}>
+        {label}
+      </span>
       <span style={{ fontWeight: 500 }}>{value}</span>
     </div>
   )
 }
-
