@@ -917,6 +917,13 @@ function EventsTab() {
         <div style={{ color: 'red', fontWeight: 'bold' }}>
           DEBUG: EventsTab LIVE
         </div>
+        <button
+  type="button"
+  className="lg-btn"
+  onClick={() => console.log('TEST-KNOPF KLICK', { draft, editingId })}
+>
+  TEST-LOG
+</button>
         <h2 style={{ marginTop: 0 }}>
           {editingId ? 'Event bearbeiten' : 'Neues Event'}
         </h2>
