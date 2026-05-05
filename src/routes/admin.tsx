@@ -785,20 +785,24 @@ function EventsTab() {
   }
 }
 
-  return (
-    <>
-      <div className="lg-panel" style={{ padding: '1.5rem' }}>
-        <h2 style={{ marginTop: 0 }}>
-          {editingId ? 'Event bearbeiten' : 'Neues Event'}
-        </h2>
-        <form
-          onSubmit={addOrUpdate}
-          style={{
-            display: 'grid',
-            gap: '0.8rem',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-          }}
-        >
+ return (
+  <>
+    <div className="lg-panel" style={{ padding: '1.5rem' }}>
+      <div style={{ color: 'red', fontWeight: 'bold' }}>
+        DEBUG: EventsTab LIVE
+      </div>
+      <h2 style={{ marginTop: 0 }}>
+        {editingId ? 'Event bearbeiten' : 'Neues Event'}
+      </h2>
+      <form
+        onSubmit={addOrUpdate}
+        style={{
+          display: 'grid',
+          gap: '0.8rem',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+        }}
+      >
+        {/* ... Rest unverändert ... */}
           <label>
             <span className="lg-label">Titel</span>
             <input
